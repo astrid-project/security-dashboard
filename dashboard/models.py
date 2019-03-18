@@ -6,4 +6,6 @@ class Service(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
+    service_name = models.CharField(max_length=200)
     service_file = models.FileField(upload_to='uploads/')
+    last_modified = models.DateTimeField(auto_now=True)

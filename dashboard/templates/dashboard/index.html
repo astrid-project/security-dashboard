@@ -2,105 +2,54 @@
 {% load static %}
 
 {% block main %}
+<div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+<h1 class="display-4">Welcome!</h1>
+<p class="lead">What you can do</p>
+</div>
 
-
-<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Dashboard</h1>
-  </div>
-  <div class="row">
-    <div class="col" id="mynetwork" style='height:400px'></div>
-    <div class="col">
-      <div class="btn-group-toggle" data-toggle="buttons">
-        <label class="btn btn-outline-primary active">
-          <input type="checkbox" checked autocomplete="off"> Block all traffic
-        </label>
+<div class="container">
+  <div class="card-deck">
+    <div class="card">
+      <img src="{% static 'dashboard/img/cloud-upload-alt-solid.svg' %}" class="card-img-top" alt="" style="height:60px">
+      <div class="card-body">
+        <h5 class="card-title"><a class="nav-link" href="{% url 'dashboard:index' %}">Upload service description</a></h5>
+        <p class="card-text">Upload your service description file (TOSCA, Docker-Compose <i class="fab fa-docker"></i>)</p>
+      </div>
+      <div class="card-footer">
+        <!-- <small class="text-muted">Last updated 3 mins ago</small> -->
+      </div>
+    </div>
+    <div class="card">
+      <img src="{% static 'dashboard/img/bezier-curve-solid.svg' %}" class="card-img-top" alt="" style="height:60px">
+      <div class="card-body">
+        <h5 class="card-title"><a class="nav-link" href="{% url 'dashboard:index' %}">Apply security enrichment</a></h5>
+        <p class="card-text">Select security enrichments according to your SAL</p>
+      </div>
+      <div class="card-footer">
+        <!-- <small class="text-muted">Last updated 3 mins ago</small> -->
+      </div>
+    </div>
+    <div class="card">
+      <img src="{% static 'dashboard/img/cogs-solid.svg' %}" class="card-img-top" alt="" style="height:60px">
+      <div class="card-body">
+        <h5 class="card-title"><a class="nav-link" href="{% url 'dashboard:index' %}">Deploy secured service</a></h5>
+        <p class="card-text">Deploy your secured service with supported service orchestrators</p>
+      </div>
+      <div class="card-footer">
+        <!-- <small class="text-muted">Last updated 3 mins ago</small> -->
+      </div>
+    </div>
+    <div class="card">
+      <img src="{% static 'dashboard/img/chart-bar-solid.svg' %}" class="card-img-top" alt="" style="height:60px">
+      <div class="card-body">
+        <h5 class="card-title"><a class="nav-link" href="{% url 'dashboard:index' %}">Monitor service</a></h5>
+        <p class="card-text">Monitoring, alerting, trending (MAT), analytics of your secured services</p>
+      </div>
+      <div class="card-footer">
+        <!-- <small class="text-muted">Last updated 3 mins ago</small> -->
       </div>
     </div>
   </div>
-</main>
-{% endblock %}
-{% block customjs %}
-<script type="text/javascript">
-    // create an array with nodes
-    // var nodes = new vis.DataSet([
-    //     {id: 1, label: 'Node 1'},
-    //     {id: 2, label: 'Node 2'},
-    //     {id: 3, label: 'Node 3'},
-    //     {id: 4, label: 'Node 4'},
-    //     {id: 5, label: 'Node 5'}
-    // ]);
-    //
-    // // create an array with edges
-    // var edges = new vis.DataSet([
-    //     {from: 1, to: 3},
-    //     {from: 1, to: 2},
-    //     {from: 2, to: 4},
-    //     {from: 2, to: 5}
-    // ]);
-    //
-    // // create a network
-    // var container = document.getElementById('mynetwork');
-    //
-    // // provide the data in the vis format
-    // var data = {
-    //     nodes: nodes,
-    //     edges: edges
-    // };
-    // var options = {};
-    //
-    // // initialize your network!
-    // var network = new vis.Network(container, data, options);
-    // provide data in the DOT language
-    // var DOTstring = 'dinetwork {1 -> 1 -> 2; 2 -> 3; 2 -- 4; 2 -> 1 }';
-    // var DOTstring = '{{ dot_file }}';
-    // var parsedData = vis.network.convertDot(DOTstring);
+</div>
 
-    // var data = {
-    //   nodes: parsedData.nodes,
-    //   edges: parsedData.edges
-    // }
-
-    {% autoescape off %}
-    var data = {
-      nodes: new vis.DataSet({{ nodes }}),
-      edges: new vis.DataSet({{ edges }})
-    }
-    {% endautoescape %}
-
-    // you can extend the options like a normal JSON variable:
-    var options = {
-      groups: {
-        service: {
-          shape: 'icon',
-          icon: {
-            face: 'FontAwesome',
-            code: '\uf233',
-            size: 50,
-            color: 'lightblue'
-          }
-        },
-        public: {
-          shape: 'icon',
-          icon: {
-            face: 'FontAwesome',
-            code: '\uf0c2',
-            size: 50,
-            color: 'lightblue'
-          }
-        }
-      },
-      edges: {
-        smooth: {
-          type: "cubicBezier",
-          forceDirection: "none",
-          roundness: 0.3,
-        },
-        color:{color:'#ff0000', opacity:0.3}
-      }
-    }
-    var container = document.getElementById('mynetwork');
-    // create a network
-    var network = new vis.Network(container, data, options);
-</script>
 {% endblock %}

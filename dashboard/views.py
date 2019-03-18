@@ -8,15 +8,34 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
 from django.contrib.auth import logout as django_logout
 
+from django.views import generic
+
 from .forms import UploadFileForm
 from .service import generate_visjs_graph
+from .models import Service
+
+
+@login_required
+def services(request):
+
+    service_list = Service.objects.filter(owner_id=request.user.id)
+
+    return render(request, 'dashboard/services.html',
+                  {'service_list': service_list})
+
+
+@login_required
+def slas(request):
+
+    return render(request, 'dashboard/slas.html')
+
 
 @login_required
 def index(request):
     # form = UploadFileForm()
-    with open('/home/benjamin/code/astrid/dashboard/test/docker-compose.yml') as f:
-        nodes, edges = generate_visjs_graph(f)
-
+    # with open('/home/benjamin/code/astrid/dashboard/test/docker-compose.yml') as f:
+    #     nodes, edges = generate_visjs_graph(f)
+    nodes, edges = dict(), dict()
     return render(request, 'dashboard/index.html',
                   {"nodes": nodes, "edges": edges})
 
