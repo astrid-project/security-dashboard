@@ -9,11 +9,16 @@ from django.contrib.auth import login as django_login
 from django.contrib.auth import logout as django_logout
 
 from .forms import UploadFileForm
+from .service import generate_visjs_graph
 
 @login_required
 def index(request):
     # form = UploadFileForm()
-    return render(request, 'dashboard/index.html')
+    with open('/home/benjamin/code/astrid/dashboard/test/docker-compose.yml') as f:
+        nodes, edges = generate_visjs_graph(f)
+
+    return render(request, 'dashboard/index.html',
+                  {"nodes": nodes, "edges": edges})
 
 
 @login_required

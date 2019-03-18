@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
+MEDIA_ROOT = '/home/benjamin/code/astrid/dashboard/media/'
 # Application definition
 
 INSTALLED_APPS = [
