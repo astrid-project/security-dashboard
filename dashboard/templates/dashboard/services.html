@@ -3,14 +3,34 @@
 
 {% block main %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-  <h1 class="h2">Your services</h1>
+  <h1 class="h2">My services</h1>
 </div>
+
+<div class="row mt-5 mb-5">
+  <h5>Upload your service description files here (TOSCA, Docker-Compose <i class="fab fa-docker"></i>)</h5>
+</div>
+
+<form class="form-inline">
+  <div class="form-group">
+    <input type="file" class="form-control-file" id="formControlFile">
+  </div>
+  <button class="btn btn-outline-secondary" type="submit">Upload</button>
+</form>
+
+<div class="row mt-5 mb-5">
+  <h5>Select security enrichments & deploy your services</h5>
+</div>
+<!-- <div class="row">
+  <p>Click to edit</p>
+</div> -->
+
 {% if service_list %}
 <div class="table-responsive">
-  <table class="table table-striped table-sm">
+  <p>Click table entry for security enrichment and service deployment</<p>
+  <table class="table table-striped table-sm table-hover">
     <thead>
       <tr>
-        <th>#</th>
+        <th>Id</th>
         <th>Name</th>
         <th>File</th>
         <th>Modified</th>
@@ -19,7 +39,7 @@
     </thead>
     <tbody>
       {% for service in service_list %}
-      <tr>
+      <tr class='clickable-row' data-href="{% url 'dashboard:security' service.id %}">
         <td>{{ service.id }}</td>
         <td>{{ service.service_name}}</td>
         <td>{{ service.service_file}}</td>
@@ -31,4 +51,14 @@
   </table>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block customjs %}
+<script>
+(function () {
+    $(".clickable-row").click(function() {
+      window.location = $(this).data("href");
+    });
+}())
+</script>
 {% endblock %}

@@ -3,16 +3,46 @@
 
 {% block main %}
   <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Dashboard</h1>
+    <h1 class="h2">Security enrichment & service deployment</h1>
+  </div>
+  <div class="row">
+    <h2 class="col">Service - {{ service.service_name }}</h2>
+    <!-- <h2 class="col">Security policies</h2> -->
   </div>
   <div class="row">
     <div class="col" id="mynetwork" style='height:400px'></div>
     <div class="col">
-      <div class="btn-group-toggle" data-toggle="buttons">
-        <label class="btn btn-outline-primary active">
-          <input type="checkbox" checked autocomplete="off"> Block all traffic
-        </label>
-      </div>
+      {% if basic_policies %}
+      <h6 class="row text-muted">Basic policies</h6>
+      {% for policy in basic_policies %}
+        <div class="custom-control custom-switch">
+          {% if policy.policy_enabled is True %}
+          <input type="checkbox" class="custom-control-input" id="{{ policy.policy_name | slugify }}" checked>
+          {% else %}
+          <input type="checkbox" class="custom-control-input" id="{{ policy.policy_name | slugify }}">
+          {% endif %}
+          <label class="custom-control-label" for="{{ policy.policy_name | slugify }}">{{ policy.policy_description }}</label>
+        </div>
+      {% endfor %}
+      {% endif %}
+      {% if pro_policies %}
+      <h6 class="row text-muted">Pro policies</h6>
+      {% for policy in pro_policies %}
+        <div class="custom-control custom-switch">
+          <input type="checkbox" class="custom-control-input" id="{{ policy.policy_name | slugify }}" disabled>
+          <label class="custom-control-label" for="{{ policy.policy_name | slugify }}">{{ policy.policy_description }}</label>
+        </div>
+      {% endfor %}
+      {% endif %}
+      {% if unlimited_policies %}
+      <h6 class="row text-muted">Unlimited policies</h6>
+      {% for policy in unlimited_policies %}
+        <div class="custom-control custom-switch">
+          <input type="checkbox" class="custom-control-input" id="{{ policy.policy_name | slugify }}" disabled>
+          <label class="custom-control-label" for="{{ policy.policy_name | slugify }}">{{ policy.policy_description }}</label>
+        </div>
+      {% endfor %}
+      {% endif %}
     </div>
   </div>
 

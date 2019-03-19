@@ -1,4 +1,6 @@
 import yaml
+import json
+
 
 def generate_visjs_graph(service_file):
     service_dict = yaml.load(service_file)

@@ -1,0 +1,43 @@
+{
+  "sla": [
+    {
+      "type": "basic",
+      "policies": [
+        {
+          "name": "allowed connections",
+          "description": "list of allowed connections",
+          "type": "list",
+          "value": []
+        },
+        {
+          "name": "public access",
+          "description": "allow public access",
+          "type": "bool",
+          "value": false
+        }
+      ]
+    },
+    {
+      "type": "pro",
+      "policies": [
+        {
+          "name": "secure all connections",
+          "description": "establish secure connections between all components",
+          "type": "bool",
+          "value": false
+        }
+      ]
+    },
+    {
+      "type": "unlimited",
+      "policies": [
+        {
+          "name": "DDoS",
+          "description": "protection against distributed denial-of-service attacks",
+          "type": "bool",
+          "value": false
+        }
+      ]
+    }
+  ]
+}

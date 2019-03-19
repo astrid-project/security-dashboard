@@ -7,12 +7,34 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
 from django.contrib.auth import logout as django_logout
+from django.core.files.storage import default_storage
 
 from django.views import generic
 
 from .forms import UploadFileForm
 from .service import generate_visjs_graph
 from .models import Service
+
+
+
+@login_required
+def security(request, service_id):
+
+    service = Service.objects.get(id=service_id, owner_id=request.user.id)
+
+    nodes, edges = generate_visjs_graph(default_storage.open(service.service_file))
+
+    basic_policies = service.securitypolicy_set.filter(policy_sla='B')
+    pro_policies = service.securitypolicy_set.filter(policy_sla='P')
+    unlimited_policies = service.securitypolicy_set.filter(policy_sla='U')
+    
+    return render(request, 'dashboard/security.html',
+                  {'nodes': nodes,
+                   'edges': edges,
+                   'service': service,
+                   'basic_policies': basic_policies,
+                   'pro_policies': pro_policies,
+                   'unlimited_policies': unlimited_policies})
 
 
 @login_required
