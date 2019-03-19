@@ -19,7 +19,8 @@
   }
 
   .navbar {
-    background-color: lightsteelblue;
+    background-color: #f8f9fa;
+    border:1px solid lightgray;
   }
 
   .navbar-brand {
@@ -35,7 +36,7 @@
 {% block content %}
 <!-- <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow"> -->
 <nav class="navbar fixed-top flex-md-nowrap p-0">
-<a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">ASTRID</a>
+<span class="navbar-brand col-sm-3 col-md-2 mr-0">ASTRID</span>
 <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
 <ul class="navbar-nav px-3">
 <li class="nav-item text-nowrap">
@@ -51,31 +52,36 @@
         <ul class="nav flex-column">
           <li class="nav-item">
             <a class="nav-link" href="{% url 'dashboard:index' %}">
-              <span data-feather="home"></span>
+              <!-- <span data-feather="home"></span> -->
+              <i class="fas fa-table"></i>
               Dashboard <!-- <span class="sr-only">(current)</span> -->
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'dashboard:slas' %}">
-              <span data-feather="award"></span>
+              <!-- <span data-feather="award"></span> -->
+              <i class="fas fa-award"></i>
               SLAs
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'dashboard:services' %}">
-              <span data-feather="layers"></span>
+              <!-- <span data-feather="layers"></span> -->
+              <i class="fas fa-bezier-curve"></i>
               Services
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#">
-              <span data-feather="activity"></span>
+              <!-- <span data-feather="activity"></span> -->
+              <i class="fas fa-chart-bar"></i>
               Monitoring
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#">
-              <span data-feather="user"></span>
+              <!-- <span data-feather="user"></span> -->
+              <i class="fas fa-user"></i>
               User
             </a>
           </li>
@@ -90,13 +96,15 @@
         <ul class="nav flex-column mb-2">
           <li class="nav-item">
             <a class="nav-link" href="#">
-              <span data-feather="file-text"></span>
+              <!-- <span data-feather="file-text"></span> -->
+              <i class="fab fa-readme"></i>
               Upload service description
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#">
-              <span data-feather="file-text"></span>
+              <!-- <span data-feather="file-text"></span> -->
+              <i class="fab fa-readme"></i>
               Security enrichment
             </a>
           </li>
@@ -145,8 +153,13 @@
 </div>
 {% endblock %}
 {% block script %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.9.0/feather.min.js" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js" crossorigin="anonymous"></script>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.9.0/feather.min.js" crossorigin="anonymous"></script> -->
+<!-- <script src="https://unpkg.com/feather-icons"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script> -->
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js" crossorigin="anonymous"></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js" crossorigin="anonymous"></script>
+<!-- <script>
+    feather.replace()
+</script> -->
 <!-- <script src="{% static 'dashboard/js/dashboard.js' %}"></script> -->
 {% endblock %}

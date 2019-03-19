@@ -10,9 +10,11 @@
 <div class="container">
   <div class="card-deck">
     <div class="card">
-      <img src="{% static 'dashboard/img/cloud-upload-alt-solid.svg' %}" class="card-img-top" alt="" style="height:60px">
+      <a href="{% url 'dashboard:services' %}">
+      <img src="{% static 'dashboard/img/cloud-upload-alt-solid.svg' %}" class="card-img-top mt-3" alt="" style="height:60px">
+      </a>
       <div class="card-body">
-        <h5 class="card-title"><a class="nav-link" href="{% url 'dashboard:index' %}">Upload service description</a></h5>
+        <h5 class="card-title">Upload service description</h5>
         <p class="card-text">Upload your service description file (TOSCA, Docker-Compose <i class="fab fa-docker"></i>)</p>
       </div>
       <div class="card-footer">
@@ -20,9 +22,11 @@
       </div>
     </div>
     <div class="card">
-      <img src="{% static 'dashboard/img/bezier-curve-solid.svg' %}" class="card-img-top" alt="" style="height:60px">
+      <a href="{% url 'dashboard:services' %}">
+      <img src="{% static 'dashboard/img/bezier-curve-solid.svg' %}" class="card-img-top mt-3" alt="" style="height:60px">
+      </a>
       <div class="card-body">
-        <h5 class="card-title"><a class="nav-link" href="{% url 'dashboard:index' %}">Apply security enrichment</a></h5>
+        <h5 class="card-title">Apply security enrichment</h5>
         <p class="card-text">Select security enrichments according to your SAL</p>
       </div>
       <div class="card-footer">
@@ -30,9 +34,11 @@
       </div>
     </div>
     <div class="card">
-      <img src="{% static 'dashboard/img/cogs-solid.svg' %}" class="card-img-top" alt="" style="height:60px">
+      <a href="{% url 'dashboard:services' %}">
+      <img src="{% static 'dashboard/img/cogs-solid.svg' %}" class="card-img-top mt-3" alt="" style="height:60px">
+      </a>
       <div class="card-body">
-        <h5 class="card-title"><a class="nav-link" href="{% url 'dashboard:index' %}">Deploy secured service</a></h5>
+        <h5 class="card-title">Deploy secured service</h5>
         <p class="card-text">Deploy your secured service with supported service orchestrators</p>
       </div>
       <div class="card-footer">
@@ -40,9 +46,9 @@
       </div>
     </div>
     <div class="card">
-      <img src="{% static 'dashboard/img/chart-bar-solid.svg' %}" class="card-img-top" alt="" style="height:60px">
+      <img src="{% static 'dashboard/img/chart-bar-solid.svg' %}" class="card-img-top mt-3" alt="" style="height:60px">
       <div class="card-body">
-        <h5 class="card-title"><a class="nav-link" href="{% url 'dashboard:index' %}">Monitor service</a></h5>
+        <h5 class="card-title">Monitor service</h5>
         <p class="card-text">Monitoring, alerting, trending (MAT), analytics of your secured services</p>
       </div>
       <div class="card-footer">

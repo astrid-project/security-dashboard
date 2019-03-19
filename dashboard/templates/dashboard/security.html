@@ -3,15 +3,24 @@
 
 {% block main %}
   <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Security enrichment & service deployment</h1>
+    <h2>Security enrichment & service deployment</h2>
   </div>
   <div class="row">
-    <h2 class="col">Service - {{ service.service_name }}</h2>
+    <h2 class="col">{{ service.service_name }}</h2>
     <!-- <h2 class="col">Security policies</h2> -->
   </div>
   <div class="row">
     <div class="col" id="mynetwork" style='height:400px'></div>
-    <div class="col">
+    <div class="col ml-5 mt-5">
+      {% if all_edges %}
+      <h6 class="row text-muted">Allow connections</h6>
+      {% for edge in all_edges %}
+      <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input" id="{{ edge.id | slugify }}">
+        <label class="custom-control-label" for="{{ edge.id | slugify }}">{{ edge.from }} to {{ edge.to }}</label>
+      </div>
+      {% endfor %}
+      {% endif %}
       {% if basic_policies %}
       <h6 class="row text-muted">Basic policies</h6>
       {% for policy in basic_policies %}
@@ -26,7 +35,7 @@
       {% endfor %}
       {% endif %}
       {% if pro_policies %}
-      <h6 class="row text-muted">Pro policies</h6>
+      <h6 class="row text-muted">Pro policies - get the Pro-SLA <i class="fas fa-tag"></i></h6>
       {% for policy in pro_policies %}
         <div class="custom-control custom-switch">
           <input type="checkbox" class="custom-control-input" id="{{ policy.policy_name | slugify }}" disabled>
@@ -35,7 +44,7 @@
       {% endfor %}
       {% endif %}
       {% if unlimited_policies %}
-      <h6 class="row text-muted">Unlimited policies</h6>
+      <h6 class="row text-muted">Unlimited policies - get the Unlimited-SLA <i class="fas fa-tag"></i></h6>
       {% for policy in unlimited_policies %}
         <div class="custom-control custom-switch">
           <input type="checkbox" class="custom-control-input" id="{{ policy.policy_name | slugify }}" disabled>
@@ -43,6 +52,14 @@
         </div>
       {% endfor %}
       {% endif %}
+    </div>
+  </div>
+  <div class="row border-top">
+    <div class="col mt-3">
+      <button type="button" class="btn btn-danger">Deploy service</button>
+    </div>
+    <div class="col mt-3">
+      <button type="button" class="btn btn-success">Apply policies</button>
     </div>
   </div>
 
