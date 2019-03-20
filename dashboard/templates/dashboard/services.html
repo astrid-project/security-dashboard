@@ -10,11 +10,20 @@
   <h5>Upload your service description files here (TOSCA, Docker-Compose <i class="fab fa-docker"></i>)</h5>
 </div>
 
-<form class="form-inline">
-  <div class="form-group">
-    <input type="file" class="form-control-file" id="formControlFile">
+<form enctype="multipart/form-data" action="{% url 'dashboard:services' %}" method="post">
+  {% csrf_token %}
+  <div class="form-group row">
+    <input type="file" class="form-control-file col-sm-4" id="formControlFile" name="service-file">
+    <div class="col-sm-1">
+      <button class="btn btn-outline-secondary" type="submit">Upload</button>
+    </div>
   </div>
-  <button class="btn btn-outline-secondary" type="submit">Upload</button>
+  <div class="form-group row">
+    <label class="col-sm-1 col-form-label" for="service-name">Service name</label>
+    <div class="col-sm-4">
+      <input type="text" class="form-control" id="service-name" name="service-name" placeholder="Example app">
+    </div>
+  </div>
 </form>
 
 <div class="row mt-5 mb-5">

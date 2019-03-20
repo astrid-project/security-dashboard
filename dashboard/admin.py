@@ -1,12 +1,19 @@
 from django.contrib import admin
 
-from .models import Service, SecurityPolicy
+from .models import Service, SecurityPolicy, Customer
 
-class SecurityPolicyInline(admin.TabularInline):
-    model = SecurityPolicy
-    extra = 3
+# class SecurityPolicyInline(admin.TabularInline):
+#     model = SecurityPolicy
+#     extra = 3
+#
+# class ServiceAdmin(admin.ModelAdmin):
+#     inlines = [SecurityPolicyInline]
 
-class ServiceAdmin(admin.ModelAdmin):
-    inlines = [SecurityPolicyInline]
+class SecurityPolicyAdmin(admin.ModelAdmin):
+    list_display = ('policy_id', 'policy_sla', 'policy_name',
+                    'policy_description', 'last_modified')
 
-admin.site.register(Service, ServiceAdmin)
+
+admin.site.register(Service)
+admin.site.register(SecurityPolicy, SecurityPolicyAdmin)
+admin.site.register(Customer)

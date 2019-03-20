@@ -17,8 +17,18 @@
       font-size: 3.5rem;
     }
   }
+
+  .btn {
+    font-size: 80%;
+    letter-spacing: .1rem;
+  }
+
+  .btn-idm {
+    background-color: #3b5998;
+  }
 </style>
 <!-- Custom styles for this template -->
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link href="{% static 'dashboard/css/signin.css' %}" rel="stylesheet">
 
 {% endblock %}
@@ -34,14 +44,17 @@
 <input name="username" type="username" id="inputUser" class="form-control" placeholder="Username" required autofocus>
 <label for="inputPassword" class="sr-only">Password</label>
 <input name="password" type="password" id="inputPassword" class="form-control" placeholder="Password" required>
-<div class="checkbox mb-3">
+<!-- <div class="checkbox mb-3">
   <label>
     <input type="checkbox" value="remember-me"> Remember me
   </label>
-</div>
+</div> -->
 <input type="hidden" name="next" value="{{ next }}">
-<button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
-<p class="mt-5 mb-3 text-muted">&copy; 2018-2019</p>
+<button class="btn btn-lg btn-primary btn-block" type="submit">SIGN IN</button>
 </form>
+<form class="form-signin">
+<button class="btn btn-idm btn-lg btn-primary btn-block" type="submit"><i class="fas fa-shield-alt"></i> SIGN IN WITH ASTRID IDM</button>
+</form>
+<p class="mt-5 mb-3 text-muted">&copy; 2018-2019</p>
 </div>
 {% endblock %}

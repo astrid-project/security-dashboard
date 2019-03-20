@@ -10,141 +10,162 @@
     <!-- <h2 class="col">Security policies</h2> -->
   </div>
   <div class="row">
-    <div class="col" id="mynetwork" style='height:400px'></div>
-    <div class="col ml-5 mt-5">
-      {% if all_edges %}
-      <h6 class="row text-muted">Allow connections</h6>
-      {% for edge in all_edges %}
-      <div class="custom-control custom-switch">
-        <input type="checkbox" class="custom-control-input" id="{{ edge.id | slugify }}">
-        <label class="custom-control-label" for="{{ edge.id | slugify }}">{{ edge.from }} to {{ edge.to }}</label>
-      </div>
-      {% endfor %}
-      {% endif %}
-      {% if basic_policies %}
-      <h6 class="row text-muted">Basic policies</h6>
-      {% for policy in basic_policies %}
-        <div class="custom-control custom-switch">
-          {% if policy.policy_enabled is True %}
-          <input type="checkbox" class="custom-control-input" id="{{ policy.policy_name | slugify }}" checked>
-          {% else %}
-          <input type="checkbox" class="custom-control-input" id="{{ policy.policy_name | slugify }}">
-          {% endif %}
-          <label class="custom-control-label" for="{{ policy.policy_name | slugify }}">{{ policy.policy_description }}</label>
-        </div>
-      {% endfor %}
-      {% endif %}
-      {% if pro_policies %}
-      <h6 class="row text-muted">Pro policies - get the Pro-SLA <i class="fas fa-tag"></i></h6>
-      {% for policy in pro_policies %}
-        <div class="custom-control custom-switch">
-          <input type="checkbox" class="custom-control-input" id="{{ policy.policy_name | slugify }}" disabled>
-          <label class="custom-control-label" for="{{ policy.policy_name | slugify }}">{{ policy.policy_description }}</label>
-        </div>
-      {% endfor %}
-      {% endif %}
-      {% if unlimited_policies %}
-      <h6 class="row text-muted">Unlimited policies - get the Unlimited-SLA <i class="fas fa-tag"></i></h6>
-      {% for policy in unlimited_policies %}
-        <div class="custom-control custom-switch">
-          <input type="checkbox" class="custom-control-input" id="{{ policy.policy_name | slugify }}" disabled>
-          <label class="custom-control-label" for="{{ policy.policy_name | slugify }}">{{ policy.policy_description }}</label>
-        </div>
-      {% endfor %}
-      {% endif %}
-    </div>
+    <p><i class="fas fa-info-circle"></i> For a working service you should at least enable depended connections</p>
   </div>
-  <div class="row border-top">
-    <div class="col mt-3">
-      <button type="button" class="btn btn-danger">Deploy service</button>
+  <div class="row">
+    <div class="col" id="mynetwork" style='height:400px'>
     </div>
-    <div class="col mt-3">
-      <button type="button" class="btn btn-success">Apply policies</button>
+    <div class="col ml-5 mt-5 mb-5">
+      <form action="{% url 'dashboard:security' service.id %}" method="post">
+        {% csrf_token %}
+        {% if all_edges %}
+        <h6 class="row text-muted">Allow connections</h6>
+        {% for edge in all_edges %}
+        <div class="custom-control custom-switch">
+          {% if edge.id in allowed_connections %}
+          <input type="checkbox" class="custom-control-input" id="{{ edge.id | slugify }}" value="{{ edge.id | slugify }}" name="{{ edge.id | slugify }}" onclick="toggleEdge('{{ edge.id }}', '{{ edge.from }}', '{{ edge.to }}');" checked>
+          {% else %}
+          <input type="checkbox" class="custom-control-input" id="{{ edge.id | slugify }}" value="{{ edge.id | slugify }}" name="{{ edge.id | slugify }}" onclick="toggleEdge('{{ edge.id }}', '{{ edge.from }}', '{{ edge.to }}');">
+          {% endif %}
+          <label class="custom-control-label" for="{{ edge.id | slugify }}">{{ edge.from }} to {{ edge.to }}</label>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% if basic_policies %}
+        <h6 class="row text-muted">Basic policies</h6>
+        {% for policy in basic_policies %}
+          <div class="custom-control custom-switch">
+            {% if policy.policy_id in service_policies %}
+            <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}" name="{{ policy.policy_id }}" checked>
+            {% else %}
+            <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}" name="{{ policy.policy_id }}">
+            {% endif %}
+            <label class="custom-control-label" for="{{ policy.policy_id }}">{{ policy.policy_description }}</label>
+          </div>
+        {% endfor %}
+        {% endif %}
+        {% if pro_policies %}
+        <h6 class="row text-muted">Pro policies - get the Pro-SLA <i class="fas fa-tag"></i></h6>
+        {% for policy in pro_policies %}
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" disabled>
+            <label class="custom-control-label" for="{{ policy.policy_id }}">{{ policy.policy_description }}</label>
+          </div>
+        {% endfor %}
+        {% endif %}
+        {% if unlimited_policies %}
+        <h6 class="row text-muted">Unlimited policies - get the Unlimited-SLA <i class="fas fa-tag"></i></h6>
+        {% for policy in unlimited_policies %}
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" disabled>
+            <label class="custom-control-label" for="{{ policy.policy_id }}">{{ policy.policy_description }}</label>
+          </div>
+        {% endfor %}
+        {% endif %}
+        <div class="mt-3">
+          <button type="submit" class="btn btn-success">Apply policies</button>
+          <button type="button" class="btn btn-danger">Deploy service</button>
+        </div>
+      </form>
     </div>
   </div>
 
 {% endblock %}
 {% block customjs %}
 <script type="text/javascript">
-    // create an array with nodes
-    // var nodes = new vis.DataSet([
-    //     {id: 1, label: 'Node 1'},
-    //     {id: 2, label: 'Node 2'},
-    //     {id: 3, label: 'Node 3'},
-    //     {id: 4, label: 'Node 4'},
-    //     {id: 5, label: 'Node 5'}
-    // ]);
-    //
-    // // create an array with edges
-    // var edges = new vis.DataSet([
-    //     {from: 1, to: 3},
-    //     {from: 1, to: 2},
-    //     {from: 2, to: 4},
-    //     {from: 2, to: 5}
-    // ]);
-    //
-    // // create a network
-    // var container = document.getElementById('mynetwork');
-    //
-    // // provide the data in the vis format
-    // var data = {
-    //     nodes: nodes,
-    //     edges: edges
-    // };
-    // var options = {};
-    //
-    // // initialize your network!
-    // var network = new vis.Network(container, data, options);
-    // provide data in the DOT language
-    // var DOTstring = 'dinetwork {1 -> 1 -> 2; 2 -> 3; 2 -- 4; 2 -> 1 }';
-    // var DOTstring = '{{ dot_file }}';
-    // var parsedData = vis.network.convertDot(DOTstring);
+  var nodes, edges, network;
 
-    // var data = {
-    //   nodes: parsedData.nodes,
-    //   edges: parsedData.edges
-    // }
+  function toJSON(obj) {
+    return JSON.stringify(obj, null, 4);
+  }
 
-    {% autoescape off %}
-    var data = {
-      nodes: new vis.DataSet({{ nodes }}),
-      edges: new vis.DataSet({{ edges }})
-    }
-    {% endautoescape %}
-
-    // you can extend the options like a normal JSON variable:
-    var options = {
-      groups: {
-        service: {
-          shape: 'icon',
-          icon: {
-            face: 'FontAwesome',
-            code: '\uf233',
-            size: 50,
-            color: 'lightblue'
-          }
-        },
-        public: {
-          shape: 'icon',
-          icon: {
-            face: 'FontAwesome',
-            code: '\uf0c2',
-            size: 50,
-            color: 'lightblue'
-          }
-        }
-      },
-      edges: {
-        smooth: {
-          type: "cubicBezier",
-          forceDirection: "none",
-          roundness: 0.3,
-        },
-        color:{color:'#ff0000', opacity:0.3}
+  function toggleEdge(id, from, to) {
+    try {
+      if (edges.getIds().includes(id)) {
+        edges.remove({id: id});
+      } else {
+        edges.add({"from": from, "to": to, "arrows": "to", "id": id,
+                   "color": {"color": "red"}});
       }
     }
-    var container = document.getElementById('mynetwork');
-    // create a network
-    var network = new vis.Network(container, data, options);
+    catch (err) {
+      alert(err);
+    }
+  }
+  function addEdge() {
+      try {
+          edges.add({
+              id: document.getElementById('edge-id').value,
+              from: document.getElementById('edge-from').value,
+              to: document.getElementById('edge-to').value
+          });
+      }
+      catch (err) {
+          alert(err);
+      }
+  }
+  function updateEdge() {
+      try {
+          edges.update({
+              id: document.getElementById('edge-id').value,
+              from: document.getElementById('edge-from').value,
+              to: document.getElementById('edge-to').value
+          });
+      }
+      catch (err) {
+          alert(err);
+      }
+  }
+  function removeEdge() {
+      try {
+          edges.remove({id: document.getElementById('edge-id').value});
+      }
+      catch (err) {
+          alert(err);
+      }
+  }
+
+  {% autoescape off %}
+  nodes = new vis.DataSet({{ nodes }});
+  edges = new vis.DataSet({{ edges }});
+  {% endautoescape %}
+
+  // you can extend the options like a normal JSON variable:
+  var options = {
+    groups: {
+      service: {
+        shape: 'icon',
+        icon: {
+          face: 'FontAwesome',
+          code: '\uf233',
+          size: 50,
+          color: 'lightblue'
+        }
+      },
+      public: {
+        shape: 'icon',
+        icon: {
+          face: 'FontAwesome',
+          code: '\uf0c2',
+          size: 50,
+          color: 'lightblue'
+        }
+      }
+    },
+    edges: {
+      smooth: {
+        type: "cubicBezier",
+        forceDirection: "none",
+        roundness: 0.3,
+      }
+    }
+  };
+  var data = {
+    nodes: nodes,
+    edges: edges
+  };
+  var container = document.getElementById('mynetwork');
+  // create a network
+  var network = new vis.Network(container, data, options);
 </script>
 {% endblock %}
