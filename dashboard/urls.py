@@ -11,4 +11,5 @@ urlpatterns = [
     path('sla/', views.slas, name='slas'),
     path('services/<int:service_id>/', views.security, name='security'),
     path('services/', views.services, name='services'),
+    path('monitoring/', views.monitoring, name='monitoring'),
 ]

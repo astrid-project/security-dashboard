@@ -1,0 +1,20 @@
+{% extends "dashboard/dashboard.html" %}
+{% load static %}
+
+{% block main %}
+<!-- <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom shadow-sm">
+<h5 class="my-0 mr-md-auto font-weight-normal">Company name</h5>
+<nav class="my-2 my-md-0 mr-md-3">
+<a class="p-2 text-dark" href="#">Features</a>
+<a class="p-2 text-dark" href="#">Enterprise</a>
+<a class="p-2 text-dark" href="#">Support</a>
+<a class="p-2 text-dark" href="#">Pricing</a>
+</nav>
+<a class="btn btn-outline-primary" href="#">Sign up</a>
+ height="600" width="1200"
+</div> -->
+
+<div class="embed-responsive embed-responsive-16by9 mt-5">
+<iframe class="embed-responsive-item" src="http://localhost:5601/app/kibana#/dashboard/edf84fe0-e1a0-11e7-b6d5-4dc382ef7f5b?embed=true&_g=(refreshInterval:(pause:!f,value:900000),time:(from:now-7d,mode:quick,to:now))&_a=(description:'Analyze+mock+web+traffic+log+data+for+Elastic!'s+website',filters:!(),fullScreenMode:!f,options:(darkTheme:!f,hidePanelTitles:!f,useMargins:!t),panels:!((embeddableConfig:(vis:(colors:('Avg.+Bytes':%236ED0E0,'Unique+Visitors':%230A437C),legendOpen:!f)),gridData:(h:13,i:'2',w:21,x:27,y:11),id:e1d0f010-9ee7-11e7-8711-e7a007dcef99,panelIndex:'2',type:visualization,version:'7.0.0-alpha1'),(gridData:(h:18,i:'4',w:24,x:0,y:49),id:'06cf9c40-9ee8-11e7-8711-e7a007dcef99',panelIndex:'4',type:visualization,version:'7.0.0-alpha1'),(embeddableConfig:(vis:(defaultColors:('0+-+22':'rgb(247,251,255)','22+-+44':'rgb(208,225,242)','44+-+66':'rgb(148,196,223)','66+-+88':'rgb(74,152,201)','88+-+110':'rgb(23,100,171)'),legendOpen:!f)),gridData:(h:13,i:'7',w:24,x:0,y:36),id:'935afa20-e0cd-11e7-9d07-1398ccfcefa3',panelIndex:'7',type:visualization,version:'6.3.0'),(embeddableConfig:(mapCenter:!(36.8092847020594,-96.94335937500001),vis:(params:(sort:(columnIndex:!n,direction:!n)))),gridData:(h:12,i:'9',w:21,x:27,y:24),id:'4eb6e500-e1c7-11e7-b6d5-4dc382ef7f5b',panelIndex:'9',type:visualization,version:'6.3.0'),(embeddableConfig:(vis:(colors:('0+-+500':%23BF1B00,'1000+-+1500':%237EB26D,'500+-+1000':%23F2C96D),defaultColors:('0+-+500':'rgb(165,0,38)','1000+-+1500':'rgb(0,104,55)','500+-+1000':'rgb(255,255,190)'),legendOpen:!f)),gridData:(h:11,i:'11',w:9,x:10,y:0),id:'69a34b00-9ee8-11e7-8711-e7a007dcef99',panelIndex:'11',title:'',type:visualization,version:'6.3.0'),(gridData:(h:12,i:'13',w:27,x:0,y:24),id:'42b997f0-0c26-11e8-b0ec-3bb475f6b6ff',panelIndex:'13',type:visualization,version:'6.3.0'),(gridData:(h:31,i:'14',w:24,x:24,y:36),id:'7cbd2350-2223-11e8-b802-5bcf64c2cfb4',panelIndex:'14',type:visualization,version:'6.3.0'),(gridData:(h:13,i:'15',w:27,x:0,y:11),id:'314c6f60-2224-11e8-b802-5bcf64c2cfb4',panelIndex:'15',type:visualization,version:'6.3.0'),(gridData:(h:11,i:'16',w:15,x:19,y:0),id:'24a3e970-4257-11e8-b3aa-73fdaf54bfc9',panelIndex:'16',title:'',type:visualization,version:'6.3.0'),(embeddableConfig:(vis:(legendOpen:!f)),gridData:(h:11,i:'17',w:14,x:34,y:0),id:'14e2e710-4258-11e8-b3aa-73fdaf54bfc9',panelIndex:'17',type:visualization,version:'6.3.0'),(embeddableConfig:(),gridData:(h:11,i:'18',w:10,x:0,y:0),id:'47f2c680-a6e3-11e8-94b4-c30c0228351b',panelIndex:'18',title:'',type:visualization,version:'7.0.0-alpha1')),query:(language:lucene,query:''),timeRestore:!t,title:'%5BLogs%5D+Web+Traffic',viewMode:view)"></iframe>
+</div>
+{% endblock %}

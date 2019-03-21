@@ -90,6 +90,11 @@ def services(request):
 
 
 @login_required
+def monitoring(request):
+    return render(request, 'dashboard/monitoring.html')
+
+
+@login_required
 def slas(request):
 
     return render(request, 'dashboard/slas.html')
