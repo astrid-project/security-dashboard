@@ -1,4 +1,4 @@
-{% extends "dashboard/dashboard.html" %}
+{% extends "dashboard/_dashboard.html" %}
 {% load static %}
 
 {% block main %}
@@ -48,7 +48,7 @@
     </thead>
     <tbody>
       {% for service in service_list %}
-      <tr class='clickable-row' data-href="{% url 'dashboard:security' service.id %}">
+      <tr class='clickable-row' data-href="{% url 'dashboard:service' service.id %}">
         <td>{{ service.id }}</td>
         <td>{{ service.service_name}}</td>
         <td>{{ service.service_file}}</td>

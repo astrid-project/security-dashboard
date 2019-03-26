@@ -9,6 +9,16 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     {% block style %}
     {% endblock style %}
+    <style>
+      .page-enter-active,
+      .page-leave-active {
+        transition: opacity .3s ease;
+      }
+      .page-enter,
+      .page-leave-to {
+        opacity: 0;
+      }
+    </style>
     <title>ASTRID - Dashboard</title>
   </head>
   <body>

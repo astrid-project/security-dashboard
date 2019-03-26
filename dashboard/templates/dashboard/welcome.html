@@ -1,4 +1,4 @@
-{% extends "dashboard/dashboard.html" %}
+{% extends "dashboard/_dashboard.html" %}
 {% load static %}
 
 {% block main %}
@@ -17,9 +17,9 @@
         <h5 class="card-title">Upload service description</h5>
         <p class="card-text">Upload your service description file (TOSCA, Docker-Compose <i class="fab fa-docker"></i>)</p>
       </div>
-      <div class="card-footer">
-        <!-- <small class="text-muted">Last updated 3 mins ago</small> -->
-      </div>
+      <!-- <div class="card-footer">
+        <small class="text-muted">Last updated 3 mins ago</small>
+      </div> -->
     </div>
     <div class="card">
       <a href="{% url 'dashboard:services' %}">
@@ -29,9 +29,9 @@
         <h5 class="card-title">Apply security enrichment</h5>
         <p class="card-text">Select security enrichments according to your SAL</p>
       </div>
-      <div class="card-footer">
-        <!-- <small class="text-muted">Last updated 3 mins ago</small> -->
-      </div>
+      <!-- <div class="card-footer">
+        <small class="text-muted">Last updated 3 mins ago</small>
+      </div> -->
     </div>
     <div class="card">
       <a href="{% url 'dashboard:services' %}">
@@ -41,19 +41,21 @@
         <h5 class="card-title">Deploy secured service</h5>
         <p class="card-text">Deploy your secured service with supported service orchestrators</p>
       </div>
-      <div class="card-footer">
-        <!-- <small class="text-muted">Last updated 3 mins ago</small> -->
-      </div>
+      <!-- <div class="card-footer">
+        <small class="text-muted">Last updated 3 mins ago</small>
+      </div> -->
     </div>
     <div class="card">
+      <a href="{% url 'dashboard:monitoring' %}">
       <img src="{% static 'dashboard/img/chart-bar-solid.svg' %}" class="card-img-top mt-3" alt="" style="height:60px">
+      </a>
       <div class="card-body">
         <h5 class="card-title">Monitor service</h5>
         <p class="card-text">Monitoring, alerting, trending (MAT), analytics of your secured services</p>
       </div>
-      <div class="card-footer">
-        <!-- <small class="text-muted">Last updated 3 mins ago</small> -->
-      </div>
+      <!-- <div class="card-footer">
+        <small class="text-muted">Last updated 3 mins ago</small>
+      </div> -->
     </div>
   </div>
 </div>

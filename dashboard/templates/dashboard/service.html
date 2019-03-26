@@ -1,4 +1,4 @@
-{% extends "dashboard/dashboard.html" %}
+{% extends "dashboard/_dashboard.html" %}
 {% load static %}
 
 {% block main %}
@@ -16,7 +16,7 @@
     <div class="col" id="mynetwork" style='height:400px'>
     </div>
     <div class="col ml-5 mt-5 mb-5">
-      <form action="{% url 'dashboard:security' service.id %}" method="post">
+      <form action="{% url 'dashboard:service' service.id %}" method="post">
         {% csrf_token %}
         {% if all_edges %}
         <h6 class="row text-muted">Allow connections</h6>
