@@ -3,21 +3,6 @@
 
 {% block style %}
 <style>
-  .bd-placeholder-img {
-    font-size: 1.125rem;
-    text-anchor: middle;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-  }
-
-  @media (min-width: 768px) {
-    .bd-placeholder-img-lg {
-      font-size: 3.5rem;
-    }
-  }
-
   .btn {
     font-size: 80%;
     letter-spacing: .1rem;
@@ -34,26 +19,26 @@
 
 {% block content %}
 <div class="container text-center">
-<form class="form-signin" action="{% url 'dashboard:login' %}" method="post">
-{% csrf_token %}
-<img class="mb-4" src="{% static 'dashboard/img/astrid-logo.png' %}">
-{% if messages %}
-<div class="messages">
-  {% for message in messages %}
-  <p{% if message.tags %} class="{{ message.tags }}"{% endif %} role="alert">{{ message }}</p>
-  {% endfor %}
-</div>
-{% endif %}
-<label for="inputUser" class="sr-only">Username</label>
-<input name="username" type="username" id="inputUser" class="form-control" placeholder="Username" required autofocus>
-<label for="inputPassword" class="sr-only">Password</label>
-<input name="password" type="password" id="inputPassword" class="form-control" placeholder="Password" required>
-<input type="hidden" name="next" value="{{ next }}">
-<button class="btn btn-lg btn-primary btn-block" type="submit">SIGN IN</button>
-</form>
-<form class="form-signin">
-<button class="btn btn-idm btn-lg btn-primary btn-block" type="submit"><i class="fas fa-shield-alt"></i> SIGN IN WITH ASTRID IDM</button>
-</form>
-<p class="mt-5 mb-3 text-muted">&copy; 2018-2019</p>
+  <form class="form-signin" action="{% url 'dashboard:login' %}" method="post">
+    {% csrf_token %}
+    <img class="mb-4" src="{% static 'dashboard/img/astrid-logo.png' %}">
+    {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+      <p{% if message.tags %} class="{{ message.tags }}"{% endif %} role="alert">{{ message }}</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <label for="inputUser" class="sr-only">Username</label>
+    <input name="username" type="username" id="inputUser" class="form-control" placeholder="Username" required autofocus>
+    <label for="inputPassword" class="sr-only">Password</label>
+    <input name="password" type="password" id="inputPassword" class="form-control" placeholder="Password" required>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="btn btn-lg btn-primary btn-block" type="submit">SIGN IN</button>
+  </form>
+  <form class="form-signin">
+    <button class="btn btn-idm btn-lg btn-primary btn-block" type="submit"><i class="fas fa-shield-alt"></i> SIGN IN WITH ASTRID IDM</button>
+  </form>
+  <p class="mt-5 mb-3 text-muted">&copy; 2018-2019</p>
 </div>
 {% endblock %}

@@ -41,6 +41,7 @@ class Service(models.Model):
     service_file = models.FileField(upload_to='uploads/')
     last_modified = models.DateTimeField(auto_now=True)
     allowed_connections = models.TextField(blank=True)
+    kibana_dashboard = models.TextField(blank=True)
     policies = models.ManyToManyField(SecurityPolicy, blank=True)
 
     def __str__(self):

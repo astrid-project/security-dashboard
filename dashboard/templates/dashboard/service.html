@@ -68,10 +68,16 @@
       </form>
     </div>
   </div>
-  <div class="row">
+  <div class="row mb-5">
+    <div class="col-4">
+      <label for="exampleFormControlSelect1">Choose service orchestrator</label>
+      <select class="form-control mb-2" id="exampleFormControlSelect1">
+        <option>OpenBaton</option>
+        <option>MAESTRO</option>
+      </select>
       <button type="button" class="btn btn-danger">Deploy service</button>
+    </div>
   </div>
-
 {% endblock %}
 {% block customjs %}
 <script type="text/javascript">
