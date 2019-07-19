@@ -1,6 +1,7 @@
 import yaml
 import json
 
+from more_itertools import collapse, unique_everseen
 
 def generate_visjs_graph(service_file):
     service_dict = yaml.safe_load(service_file)
@@ -17,20 +18,15 @@ def generate_visjs_graph(service_file):
              for b in service_dict['services']
              if b in service_dict['services'][a].get('depends_on',[])]
 
-    all_edges = [{"from": a, "to": b, "arrows": "to",
-                  "id": a + "-to-" + b}
+    all_edges = [[{"from": a, "to": b, "arrows": "to",
+                   "id": a + "-to-" + b},
+                  {"from": a, "to": "public", "arrows": "to",
+                   "id": a + "-to-public"},
+                  {"from": "public", "to": a, "arrows": "to",
+                    "id": "public-to-" + a}]
                  for a in service_dict['services']
                  for b in service_dict['services']
                  if a is not b]
 
-    edges_to_public = [{"from": d["from"],
-                        "to": "public", "arrows": "to",
-                        "id": d["from"] + "-to-public"}
-                       for d in all_edges]
-
-    edges_from_public = [{"from": "public",
-                          "to": d["from"], "arrows": "to",
-                          "id": "public-to-" + d["from"]}
-                         for d in all_edges]
-
-    return nodes, edges, all_edges + edges_to_public + edges_from_public
+    all_edges = list(unique_everseen(collapse(all_edges, base_type=dict)))
+    return nodes, edges, all_edges
