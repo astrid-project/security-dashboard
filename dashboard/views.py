@@ -46,7 +46,7 @@ def service(request, service_id):
 
         service.save()
 
-    nodes, edges, all_edges = generate_visjs_graph(default_storage.open(service.service_file))
+    nodes, edges, all_edges = generate_visjs_graph(service.service_file.read())
 
     for connection in allowed_connections:
         try:
