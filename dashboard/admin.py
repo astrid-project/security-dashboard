@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Service, SecurityPolicy, Customer
+from .models import Service, SecurityPolicy, Customer, Log
 
 # class SecurityPolicyInline(admin.TabularInline):
 #     model = SecurityPolicy
@@ -17,3 +17,4 @@ class SecurityPolicyAdmin(admin.ModelAdmin):
 admin.site.register(Service)
 admin.site.register(SecurityPolicy, SecurityPolicyAdmin)
 admin.site.register(Customer)
+admin.site.register(Log)

@@ -1,0 +1,59 @@
+{% extends "dashboard/_dashboard.html" %}
+{% load static %}
+
+{% block main %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h2>Logs, Events & Alerts</h2>
+</div>
+
+<div class="row mt-5 mb-5">
+    <h5>Logs from deployments, event notifications and security alerts</h5>
+  </div>
+{% if logs_list %}
+<div class="table-responsive">
+    <!-- <p>Click table entry for security enrichment and service deployment</<p> -->
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Modified</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs_list %}
+            <tr>
+                {% if log.log_status == "SUCCESS" %}
+                <td class="alert alert-success" role="alert">{{ log.log_id }}</td>
+                <td class="alert alert-success" role="alert">{{ log.log_message }}</td>
+                <td class="alert alert-success" role="alert">{{ log.log_status }}</td>
+                <td class="alert alert-success" role="alert">{{ log.last_modified }}</td>
+                {% elif log.log_status == "FAILURE" %}
+                <td class="alert alert-danger" role="alert">{{ log.log_id }}</td>
+                <td class="alert alert-danger" role="alert">{{ log.log_message }}</td>
+                <td class="alert alert-danger" role="alert">{{ log.log_status }}</td>
+                <td class="alert alert-danger" role="alert">{{ log.last_modified }}</td>
+                {% else %}
+                <td class="alert alert-info" role="alert">{{ log.log_id }}</td>
+                <td class="alert alert-info" role="alert">{{ log.log_message }}</td>
+                <td class="alert alert-info" role="alert">{{ log.log_status }}</td>
+                <td class="alert alert-info" role="alert">{{ log.last_modified }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block customjs %}
+<script>
+// (function () {
+//     $(".clickable-row").click(function() {
+//       window.location = $(this).data("href");
+//     });
+// }())
+</script>
+{% endblock %}

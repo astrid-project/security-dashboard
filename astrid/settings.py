@@ -25,10 +25,12 @@ SECRET_KEY = 'gpql*sfwd^e_l78#t^yy^&=7h8pi5v7qy&k82fcjyi4x08h139'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
-MEDIA_ROOT = '/home/dev/astrid/dashboard/media/'
+MEDIA_ROOT = '/tmp/media'
 # Application definition
+CELERY_RESULT_BACKEND='redis://localhost'
+CELERY_BROKER_URL='redis://localhost'
 
 INSTALLED_APPS = [
     'dashboard.apps.DashboardConfig',

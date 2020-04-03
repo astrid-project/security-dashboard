@@ -12,4 +12,5 @@ urlpatterns = [
     path('services/<int:service_id>/', views.service, name='service'),
     path('services/', views.services, name='services'),
     path('monitoring/', views.monitoring, name='monitoring'),
+    path('logs/', views.logs, name='logs'),
 ]

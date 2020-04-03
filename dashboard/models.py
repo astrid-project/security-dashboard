@@ -46,3 +46,18 @@ class Service(models.Model):
 
     def __str__(self):
         return self.service_name
+
+
+class Log(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    log_id = models.CharField(max_length=200)
+    log_status = models.CharField(max_length=200)
+    log_message = models.CharField(max_length=500)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.log_id
+

@@ -2,82 +2,108 @@
 {% load static %}
 
 {% block main %}
-  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h2>Security enrichment & service deployment</h2>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h2>Security enrichment & service deployment</h2>
+</div>
+<div class="row">
+  <h2 class="col">{{ service.service_name }}</h2>
+  <!-- <h2 class="col">Security policies</h2> -->
+</div>
+<div class="row">
+  <p><i class="fas fa-info-circle"></i> For a working service you should at least enable depended connections</p>
+</div>
+<div class="row">
+  <div class="col" id="mynetwork" style='height:400px'>
   </div>
-  <div class="row">
-    <h2 class="col">{{ service.service_name }}</h2>
-    <!-- <h2 class="col">Security policies</h2> -->
-  </div>
-  <div class="row">
-    <p><i class="fas fa-info-circle"></i> For a working service you should at least enable depended connections</p>
-  </div>
-  <div class="row">
-    <div class="col" id="mynetwork" style='height:400px'>
-    </div>
-    <div class="col ml-5 mt-5 mb-5">
-      <form action="{% url 'dashboard:service' service.id %}" method="post">
-        {% csrf_token %}
-        {% if all_edges %}
-        <h6 class="row text-muted">Allow connections</h6>
+  <div class="col ml-5 mt-5 mb-5">
+    <form action="{% url 'dashboard:service' service.id %}" method="post">
+      {% csrf_token %}
+      {% if all_edges %}
+      <h6 class="row btn text-muted" type="button" data-toggle="collapse" data-target="#connections"><i
+          class="fas fa-angle-down"></i> Allow connections
+      </h6>
+      <div id="connections" class="collapse">
         {% for edge in all_edges %}
         <div class="custom-control custom-switch">
           {% if edge.id in allowed_connections %}
-          <input type="checkbox" class="custom-control-input" id="{{ edge.id | slugify }}" value="{{ edge.id | slugify }}" name="{{ edge.id | slugify }}" onclick="toggleEdge('{{ edge.id }}', '{{ edge.from }}', '{{ edge.to }}');" checked>
+          <input type="checkbox" class="custom-control-input" id="{{ edge.id | slugify }}"
+            value="{{ edge.id | slugify }}" name="{{ edge.id | slugify }}"
+            onclick="toggleEdge('{{ edge.id }}', '{{ edge.from }}', '{{ edge.to }}');" checked>
           {% else %}
-          <input type="checkbox" class="custom-control-input" id="{{ edge.id | slugify }}" value="{{ edge.id | slugify }}" name="{{ edge.id | slugify }}" onclick="toggleEdge('{{ edge.id }}', '{{ edge.from }}', '{{ edge.to }}');">
+          <input type="checkbox" class="custom-control-input" id="{{ edge.id | slugify }}"
+            value="{{ edge.id | slugify }}" name="{{ edge.id | slugify }}"
+            onclick="toggleEdge('{{ edge.id }}', '{{ edge.from }}', '{{ edge.to }}');">
           {% endif %}
           <label class="custom-control-label" for="{{ edge.id | slugify }}">{{ edge.from }} to {{ edge.to }}</label>
         </div>
         {% endfor %}
-        {% endif %}
-        {% if basic_policies %}
-        <h6 class="row text-muted">Basic policies</h6>
+      </div>
+      {% endif %}
+      <p></p>
+      {% if basic_policies %}
+      <h6 class="row btn text-muted" type="button" data-toggle="collapse" data-target="#basic"><i
+          class="fas fa-angle-down"></i> Basic policies</h6>
+      <div id="basic" class="collapse show">
         {% for policy in basic_policies %}
-          <div class="custom-control custom-switch">
-            {% if policy.policy_id in service_policies %}
-            <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}" name="{{ policy.policy_id }}" checked>
-            {% else %}
-            <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}" name="{{ policy.policy_id }}">
-            {% endif %}
-            <label class="custom-control-label" for="{{ policy.policy_id }}">{{ policy.policy_description }}</label>
-          </div>
-        {% endfor %}
-        {% endif %}
-        {% if pro_policies %}
-        <h6 class="row text-muted">Pro policies - get the Pro-SLA <i class="fas fa-tag"></i></h6>
-        {% for policy in pro_policies %}
-          <div class="custom-control custom-switch">
-            <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" disabled>
-            <label class="custom-control-label" for="{{ policy.policy_id }}">{{ policy.policy_description }}</label>
-          </div>
-        {% endfor %}
-        {% endif %}
-        {% if unlimited_policies %}
-        <h6 class="row text-muted">Unlimited policies - get the Unlimited-SLA <i class="fas fa-tag"></i></h6>
-        {% for policy in unlimited_policies %}
-          <div class="custom-control custom-switch">
-            <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" disabled>
-            <label class="custom-control-label" for="{{ policy.policy_id }}">{{ policy.policy_description }}</label>
-          </div>
-        {% endfor %}
-        {% endif %}
-        <div class="mt-3">
-          <button type="submit" class="btn btn-success">Apply policies</button>
+        <div class="custom-control custom-switch">
+          {% if policy.policy_id in service_policies %}
+          <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}"
+            name="{{ policy.policy_id }}" checked>
+          {% else %}
+          <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}"
+            name="{{ policy.policy_id }}">
+          {% endif %}
+          <label class="custom-control-label" for="{{ policy.policy_id }}">{{ policy.policy_description }}</label>
         </div>
-      </form>
-    </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <p></p>
+      <h6 class="row btn text-muted" type="button" data-toggle="collapse" data-target="#pro"><i
+          class="fas fa-angle-down"></i> Pro policies - get the
+        Pro-SLA
+        <i class="fas fa-tag"></i></h6>
+      {% if pro_policies %}
+      <div id="pro" class="collapse show">
+        {% for policy in pro_policies %}
+        <div class="custom-control custom-switch">
+          <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" disabled>
+          <label class="custom-control-label" for="{{ policy.policy_id }}">{{ policy.policy_description }}</label>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <p></p>
+      <h6 class="row btn text-muted" type="button" data-toggle="collapse" data-target="#unlimited"><i
+          class="fas fa-angle-down"></i> Unlimited policies -
+        get
+        the Unlimited-SLA <i class="fas fa-tag"></i></h6>
+      {% if unlimited_policies %}
+      <div id="unlimited" class="collapse show">
+        {% for policy in unlimited_policies %}
+        <div class="custom-control custom-switch">
+          <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" disabled>
+          <label class="custom-control-label" for="{{ policy.policy_id }}">{{ policy.policy_description }}</label>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="mt-3">
+        <button type="submit" class="btn btn-success">Apply policies</button>
+      </div>
+    </form>
   </div>
-  <div class="row mb-5">
-    <div class="col-4">
-      <label for="exampleFormControlSelect1">Choose service orchestrator</label>
-      <select class="form-control mb-2" id="exampleFormControlSelect1">
-        <option>OpenBaton</option>
-        <option>MAESTRO</option>
-      </select>
-      <button type="button" class="btn btn-danger">Deploy service</button>
-    </div>
+</div>
+<div class="row mb-5">
+  <div class="col-4">
+    <label for="exampleFormControlSelect1">Choose service orchestrator</label>
+    <select class="form-control mb-2" id="exampleFormControlSelect1">
+      <option>Kubernetes</option>
+      <option>Maestro</option>
+    </select>
+    <button type="button" class="btn btn-danger">Deploy service</button>
   </div>
+</div>
 {% endblock %}
 {% block customjs %}
 <script type="text/javascript">
@@ -90,10 +116,12 @@
   function toggleEdge(id, from, to) {
     try {
       if (edges.getIds().includes(id)) {
-        edges.remove({id: id});
+        edges.remove({ id: id });
       } else {
-        edges.add({"from": from, "to": to, "arrows": "to", "id": id,
-                   "color": {"color": "red"}});
+        edges.add({
+          "from": from, "to": to, "arrows": "to", "id": id,
+          "color": { "color": "red" }
+        });
       }
     }
     catch (err) {
@@ -101,36 +129,36 @@
     }
   }
   function addEdge() {
-      try {
-          edges.add({
-              id: document.getElementById('edge-id').value,
-              from: document.getElementById('edge-from').value,
-              to: document.getElementById('edge-to').value
-          });
-      }
-      catch (err) {
-          alert(err);
-      }
+    try {
+      edges.add({
+        id: document.getElementById('edge-id').value,
+        from: document.getElementById('edge-from').value,
+        to: document.getElementById('edge-to').value
+      });
+    }
+    catch (err) {
+      alert(err);
+    }
   }
   function updateEdge() {
-      try {
-          edges.update({
-              id: document.getElementById('edge-id').value,
-              from: document.getElementById('edge-from').value,
-              to: document.getElementById('edge-to').value
-          });
-      }
-      catch (err) {
-          alert(err);
-      }
+    try {
+      edges.update({
+        id: document.getElementById('edge-id').value,
+        from: document.getElementById('edge-from').value,
+        to: document.getElementById('edge-to').value
+      });
+    }
+    catch (err) {
+      alert(err);
+    }
   }
   function removeEdge() {
-      try {
-          edges.remove({id: document.getElementById('edge-id').value});
-      }
-      catch (err) {
-          alert(err);
-      }
+    try {
+      edges.remove({ id: document.getElementById('edge-id').value });
+    }
+    catch (err) {
+      alert(err);
+    }
   }
 
   {% autoescape off %}
@@ -141,22 +169,30 @@
   // you can extend the options like a normal JSON variable:
   var options = {
     groups: {
-      service: {
-        shape: 'icon',
-        icon: {
-          face: 'FontAwesome',
-          code: '\uf233',
-          size: 50,
-          color: 'lightblue'
-        }
+      docker: {
+        shape: 'image',
+        image: "{% static 'dashboard/img/docker.png' %}"
+      },
+      k8_svc: {
+        shape: 'image',
+        image: "{% static 'dashboard/img/svc-256.png' %}",
+      },
+      k8_dep: {
+        shape: 'image',
+        image: "{% static 'dashboard/img/deploy-256.png' %}",
+      },
+      k8_pod: {
+        shape: 'image',
+        image: "{% static 'dashboard/img/pod-256.png' %}",
       },
       public: {
         shape: 'icon',
         icon: {
-          face: 'FontAwesome',
+          face: "'Font Awesome 5 Free'",
+          weight: "bold", // Font Awesome 5 doesn't work properly unless bold.
           code: '\uf0c2',
           size: 50,
-          color: 'lightblue'
+          color: '#326ce5'
         }
       }
     },

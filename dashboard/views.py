@@ -13,7 +13,19 @@ from django.core.files.storage import default_storage
 from django.contrib import messages
 
 from .service import generate_visjs_graph
-from .models import Service, SecurityPolicy
+from .models import Service, SecurityPolicy, Log
+from .tasks import test
+
+
+@login_required
+def logs(request):
+    t = test.delay("hello")
+    l = Log(owner=request.user, log_id=t.id, log_status=t.status)
+    l.save()
+    logs_list = Log.objects.filter(owner_id=request.user.id)
+
+    return render(request, 'dashboard/logs.html',
+                  {'logs_list': logs_list})
 
 
 @login_required
@@ -22,6 +34,7 @@ def service(request, service_id):
     allowed_connections = []
     try:
         allowed_connections = json.loads(service.allowed_connections)
+        # print(allowed_connections)
     except json.JSONDecodeError:
         pass
 
@@ -56,6 +69,7 @@ def service(request, service_id):
         except Exception as ex:
             print(ex)
 
+    # print(edges)
     basic_policies = SecurityPolicy.objects.all().filter(policy_sla='B')
     pro_policies = SecurityPolicy.objects.all().filter(policy_sla='P')
     unlimited_policies = SecurityPolicy.objects.all().filter(policy_sla='U')
