@@ -8,7 +8,22 @@
 
 <div class="row mt-5 mb-5">
     <h5>Logs from deployments, event notifications and security alerts</h5>
-  </div>
+</div>
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    <div class="{{ message.tags }} alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading">{{ message }}!</h4>
+        <p>Your deployment has been scheduled with the orchestrator. Check the logs and events below or go to the
+            service
+            monitoring view for more details.</p>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 {% if logs_list %}
 <div class="table-responsive">
     <!-- <p>Click table entry for security enrichment and service deployment</<p> -->

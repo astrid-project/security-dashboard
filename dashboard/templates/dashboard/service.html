@@ -6,7 +6,7 @@
   <h2>Security enrichment & service deployment</h2>
 </div>
 <div class="row">
-  <h2 class="col">{{ service.service_name }}</h2>
+  <h2 class="col">Namespace: {{ service.service_name }}</h2>
   <!-- <h2 class="col">Security policies</h2> -->
 </div>
 <div class="row">
@@ -96,12 +96,16 @@
 </div>
 <div class="row mb-5">
   <div class="col-4">
-    <label for="exampleFormControlSelect1">Choose service orchestrator</label>
-    <select class="form-control mb-2" id="exampleFormControlSelect1">
-      <option>Kubernetes</option>
-      <option>Maestro</option>
-    </select>
-    <button type="button" class="btn btn-danger">Deploy service</button>
+    <form action="{% url 'dashboard:deploy' service.id %}" method="post">
+      {% csrf_token %}
+      <label for="orchestratorSelect">Choose service orchestrator</label>
+      <select class="form-control mb-2" id="orchestratorSelect" name="orchestratorSelect">
+        <option value="kubernetes">Kubernetes</option>
+        <option value="maestro">Maestro</option>
+      </select>
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <button type="button submit" class="btn btn-danger">Deploy service</button>
+    </form>
   </div>
 </div>
 {% endblock %}

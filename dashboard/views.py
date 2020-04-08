@@ -3,8 +3,8 @@ import json
 from urllib.parse import urlparse
 
 from django.urls import resolve
-from django.shortcuts import render, redirect
-from django.http import Http404
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import Http404, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
@@ -14,14 +14,45 @@ from django.contrib import messages
 
 from .service import generate_visjs_graph
 from .models import Service, SecurityPolicy, Log
-from .tasks import test
+from .tasks import test, kubernetes_apply
+
+
+@login_required
+def deploy(request, service_id):
+
+    service = get_object_or_404(
+        Service, id=service_id, owner_id=request.user.id)
+
+    namespace = service.service_name
+    path = service.service_file.path
+    orchestrator = request.POST.get('orchestratorSelect', None)
+
+    print(f"Deploy {path} via {orchestrator} at {namespace}")
+
+    if orchestrator == "kubernetes":
+        t = kubernetes_apply.delay(path, namespace)
+        l = Log(owner=request.user, log_id=t.id, log_status=t.status)
+        l.save()
+
+    # t = test.delay("deploy")
+    # l = Log(owner=request.user, log_id=t.id, log_status=t.status)
+    # l.save()
+
+    # next = request.POST.get('next', '/')
+    # return HttpResponseRedirect(next)
+    messages.add_message(request, messages.INFO, 'Deployment scheduled',
+                        extra_tags='alert alert-primary')
+
+    logs_list = Log.objects.filter(owner_id=request.user.id)
+    return render(request, 'dashboard/logs.html',
+                  {'logs_list': logs_list})
 
 
 @login_required
 def logs(request):
-    t = test.delay("hello")
-    l = Log(owner=request.user, log_id=t.id, log_status=t.status)
-    l.save()
+    # t = test.delay("hello")
+    # l = Log(owner=request.user, log_id=t.id, log_status=t.status)
+    # l.save()
     logs_list = Log.objects.filter(owner_id=request.user.id)
 
     return render(request, 'dashboard/logs.html',

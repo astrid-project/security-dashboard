@@ -28,7 +28,10 @@ def generate_visjs_graph(service_file):
           #print("Kubernetes")
           if service["kind"] == "Service":
             name = "{}-service".format(service["metadata"]["name"])
-            labels = service["metadata"]["labels"]
+            try:
+              labels = service["metadata"]["labels"]
+            except:
+              labels = {}
             selector = service["spec"]["selector"]
             nodes.append({"id": name, "label": name, "group": "k8_svc",
                           "labels": labels, "selector": selector})
@@ -37,7 +40,10 @@ def generate_visjs_graph(service_file):
 
           if service["kind"] == "Deployment":
             name = "{}-deployment".format(service["metadata"]["name"])
-            labels = service["metadata"]["labels"]
+            try:
+              labels = service["metadata"]["labels"]
+            except:
+              labels = {}
             selector = service["spec"]["selector"]
             nodes.append({"id": name, "label": name, "group": "k8_dep",
                           "labels": labels, "selector": selector})

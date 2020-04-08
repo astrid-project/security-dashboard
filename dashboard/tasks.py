@@ -4,7 +4,7 @@ from __future__ import absolute_import, unicode_literals
 from celery import Task
 from celery import shared_task
 
-from kubernetes import client, config
+from kubernetes import client, config, utils
 
 from dashboard.models import Log
 
@@ -32,14 +32,23 @@ class LogTask(Task):
 
 @shared_task
 def kubernetes_apply(yaml_file, namespace="default"):
-    config.load_kube_config(config_file='/home/dev/Programming/ASTRID/config')
-    v1 = client.CoreV1Api()
-    print("Listing pods with their IPs:")
-    ret = v1.list_pod_for_all_namespaces(watch=False)
-    for i in ret.items:
-        print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
+    config.load_incluster_config()
 
-    return "apply complete"
+    aApiClient = client.ApiClient()
+    v1 = client.CoreV1Api(aApiClient)
+    body = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace))
+
+    try:
+        api_response = v1.create_namespace(body)
+    except Exception as api_exception:
+        print(api_exception)
+
+    try:
+        utils.create_from_yaml(aApiClient, yaml_file, namespace=namespace)
+    except Exception as api_exception:
+        pass
+
+    return "apply submitted"
 
 
 @shared_task

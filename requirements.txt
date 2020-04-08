@@ -4,3 +4,4 @@ more-itertools
 celery
 redis
 kubernetes
+psycopg2-binary
