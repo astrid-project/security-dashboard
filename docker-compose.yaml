@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  db:
+    image: "postgres:11"
+    environment:
+        - "POSTGRES_HOST_AUTH_METHOD=trust"
+    volumes:
+        - postgres_data:/var/lib/postgresql/data/
+    ports:
+        - "5432:5432"
+  redis:
+    image: redis
+    ports:
+        - "6379:6379"
+  dashboard:
+    #image: "bertl4398/security_dashboard:latest"
+    build: .
+    command: >
+        bash -c "python manage.py makemigrations
+        && python manage.py migrate
+        && python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - redis
+  celery:
+    #image: "bertl4398/security_dashboard:latest"
+    build: .
+    command: celery -A astrid worker -l INFO
+    depends_on:
+      - db
+      - redis
+  celery:
+    #image: "bertl4398/security_dashboard:latest"
+    build: .
+    command: celery -A astrid beat -l INFO
+    depends_on:
+      - db
+      - redis
+      
+volumes:
+  postgres_data:

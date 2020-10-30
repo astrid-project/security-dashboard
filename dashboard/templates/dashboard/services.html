@@ -7,16 +7,20 @@
   <h2>Upload & edit service descriptions</h2>
 </div>
 
-<div class="row mt-5 mb-5">
-  <h5>Upload your service description files here (TOSCA, Docker-Compose <i class="fab fa-docker"></i>)</h5>
+<div class="row mt-5">
+  <h5>Upload your service description files here</h5>
+</div>
+<div class="row mb-5">
+  <p>Kubernetes <img height="24em" src="{% static 'dashboard/img/k8.png' %}"></img> or Docker-Compose  <img height="24em" src="{% static 'dashboard/img/docker.png' %}"></img></p>
+  <!-- <i class="fab fa-docker"></i>, TOSCA</p> -->
 </div>
 
 <form enctype="multipart/form-data" action="{% url 'dashboard:services' %}" method="post">
   {% csrf_token %}
   <div class="form-group row">
-    <label class="col-sm-1 col-form-label" for="service-name"><strong>Service name</strong></label>
-    <div class="col-sm-4">
-      <input type="text" class="form-control" id="service-name" name="service-name" placeholder="Example app">
+    <label class="col-sm-2 col-form-label" for="service-name"><strong>Namespace</strong></label>
+    <div class="col-sm-3">
+      <input type="text" class="form-control" id="service-name" name="service-name" placeholder="default" value="default">
     </div>
   </div>
   <div class="form-group row">
@@ -35,6 +39,7 @@
 </div> -->
 
 {% if service_list %}
+<!-- <div class="table-responsive pre-scrollable"> -->
 <div class="table-responsive">
   <p>Click table entry for security enrichment and service deployment</<p>
   <table class="table table-striped table-hover">

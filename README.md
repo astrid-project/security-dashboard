@@ -4,15 +4,15 @@ The ASTRID Security Dashboard based on `python3.6` and `Django3.0.1`.
 
 ## Main Features:
 
-Current release v1.0 :tada:
+Current release v2.0 :tada:
 
 - [x] show current service topology
 - [x] show/edit/manage security policies (still under definition)
 - [x] show real-time and historical data
-- [ ] show/edit local agents and their configuration
-- [ ] show/edit/manage list of detection algorithms
-- [ ] show/edit/manage inspection programs
-- [ ] receive notifications/alerts from algorithms
+- [x] show/edit local agents and their configuration
+- [x] show/edit/manage list of detection algorithms
+- [x] show/edit/manage inspection programs
+- [x] receive notifications/alerts from algorithms
 
 ## Installation
 
