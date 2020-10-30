@@ -9,16 +9,16 @@
   <h2 class="col">Namespace: {{ service.service_name }}</h2>
   <!-- <h2 class="col">Security policies</h2> -->
 </div>
-<div class="row">
-  <p><i class="fas fa-info-circle"></i> For a working service you should at least enable depended connections</p>
-</div>
+<!-- <div class="row">
+  <p><i class="fas fa-info-circle"></i> Apply policies before configuration</p>
+</div> -->
 <div class="row">
   <div class="col" id="mynetwork" style='height:400px'>
   </div>
   <div class="col ml-5 mt-5 mb-5">
     <form action="{% url 'dashboard:service' service.id %}" method="post">
       {% csrf_token %}
-      {% if all_edges %}
+      <!-- {% if all_edges %}
       <h6 class="row btn text-muted" type="button" data-toggle="collapse" data-target="#connections"><i
           class="fas fa-angle-down"></i> Allow connections
       </h6>
@@ -38,7 +38,7 @@
         </div>
         {% endfor %}
       </div>
-      {% endif %}
+      {% endif %} -->
       <p></p>
       {% if basic_policies %}
       <h6 class="row btn text-muted" type="button" data-toggle="collapse" data-target="#basic"><i
@@ -53,7 +53,31 @@
           <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}"
             name="{{ policy.policy_id }}">
           {% endif %}
-          <label class="custom-control-label" for="{{ policy.policy_id }}">{{ policy.policy_description }}</label>
+          <label class="custom-control-label" for="{{ policy.policy_id }}" data-toggle="tooltip" data-placement="top" title="{{ policy.policy_description }}">{{ policy.policy_name }}</label>
+        </div>
+        <div>
+          <button type="button" class="btn btn-link" data-toggle="modal" data-target="#{{ policy.policy_id }}Modal">configure ...</button>
+          <div class="modal fade" id="{{ policy.policy_id }}Modal" tabindex="-1" role="dialog" aria-labelledby="{{ policy.policy_id }}ModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="{{ policy.policy_id }}ModalLabel">{{ policy.policy_name }} configuration</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                      <label for="{{ policy.policy_id }}.CONFIG">Configuration</label>
+                      <textarea class="form-control" id="{{ policy.policy_id }}.CONFIG" name="{{ policy.policy_id }}.CONFIG" rows="10">{% for key, value in service_configurations.items %}{% ifequal policy.policy_id key %}{{ value }}{% endifequal %}{% endfor %}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         {% endfor %}
       </div>
@@ -68,7 +92,7 @@
         {% for policy in pro_policies %}
         <div class="custom-control custom-switch">
           <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" disabled>
-          <label class="custom-control-label" for="{{ policy.policy_id }}">{{ policy.policy_description }}</label>
+          <label class="custom-control-label" for="{{ policy.policy_id }}" data-toggle="tooltip" data-placement="top" title="{{ policy.policy_description }}">{{ policy.policy_name }}</label>
         </div>
         {% endfor %}
       </div>
@@ -83,7 +107,7 @@
         {% for policy in unlimited_policies %}
         <div class="custom-control custom-switch">
           <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" disabled>
-          <label class="custom-control-label" for="{{ policy.policy_id }}">{{ policy.policy_description }}</label>
+          <label class="custom-control-label" for="{{ policy.policy_id }}" data-toggle="tooltip" data-placement="top" title="{{ policy.policy_description }}">{{ policy.policy_name }}</label>
         </div>
         {% endfor %}
       </div>
@@ -185,6 +209,10 @@
         shape: 'image',
         image: "{% static 'dashboard/img/deploy-256.png' %}",
       },
+      k8_sts: {
+        shape: 'image',
+        image: "{% static 'dashboard/img/sts-256.png' %}",
+      },      
       k8_pod: {
         shape: 'image',
         image: "{% static 'dashboard/img/pod-256.png' %}",
@@ -215,5 +243,9 @@
   var container = document.getElementById('mynetwork');
   // create a network
   var network = new vis.Network(container, data, options);
+
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
 </script>
 {% endblock %}

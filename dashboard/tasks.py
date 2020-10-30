@@ -7,6 +7,9 @@ from celery import shared_task
 from kubernetes import client, config, utils
 
 from dashboard.models import Log
+from django.conf import settings
+
+import requests
 
 
 class LogTask(Task):
@@ -46,9 +49,19 @@ def kubernetes_apply(yaml_file, namespace="default"):
     try:
         utils.create_from_yaml(aApiClient, yaml_file, namespace=namespace)
     except Exception as api_exception:
-        pass
+        print(api_exception)
 
     return "apply submitted"
+
+
+@shared_task
+def test_echo():
+    echo_server = settings.TEST_ECHO_SERVER
+
+    r = requests.get(echo_server)
+    print(r)
+
+    return "echo success"
 
 
 @shared_task

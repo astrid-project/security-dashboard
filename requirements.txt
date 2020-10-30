@@ -1,7 +1,11 @@
 Django
+djangorestframework
 pyyaml
 more-itertools
 celery
+#django-celery-beat
+mozilla-django-oidc
 redis
 kubernetes
 psycopg2-binary
+requests

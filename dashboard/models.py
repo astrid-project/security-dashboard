@@ -48,9 +48,20 @@ class Service(models.Model):
         return self.service_name
 
 
+class Configuration(models.Model):
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    policy = models.ForeignKey(SecurityPolicy, on_delete=models.CASCADE)
+    active = models.BooleanField(default=False)
+    config = models.TextField()
+
+    class Meta:
+        unique_together = ["service", "policy"]
+
+
 class Log(models.Model):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
+        related_name='logs',
         on_delete=models.CASCADE,
     )
     log_id = models.CharField(max_length=200)

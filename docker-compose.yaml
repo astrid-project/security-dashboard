@@ -14,20 +14,33 @@ services:
     ports:
         - "6379:6379"
   dashboard:
-    image: "bertl4398/security_dashboard:latest"
-    # build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    #image: "bertl4398/security_dashboard:latest"
+    build: .
+    command: >
+        bash -c "python manage.py makemigrations
+        && python manage.py migrate
+        && python manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
-    depends_on:
-      - redis
-  celery:
-    image: "bertl4398/security_dashboard:latest"
-    # build: .
-    command: celery worker --app=astrid -l info
+    volumes:
+      - .:/code
     depends_on:
       - db
       - redis
-
+  celery:
+    #image: "bertl4398/security_dashboard:latest"
+    build: .
+    command: celery -A astrid worker -l INFO
+    depends_on:
+      - db
+      - redis
+  celery:
+    #image: "bertl4398/security_dashboard:latest"
+    build: .
+    command: celery -A astrid beat -l INFO
+    depends_on:
+      - db
+      - redis
+      
 volumes:
   postgres_data:

@@ -36,9 +36,9 @@
     <input type="hidden" name="next" value="{{ next }}">
     <button class="btn btn-lg btn-primary btn-block" type="submit">SIGN IN</button>
   </form>
-  <form class="form-signin">
-    <button class="btn btn-idm btn-lg btn-primary btn-block" type="submit"><i class="fas fa-shield-alt"></i> SIGN IN WITH ASTRID IDM</button>
-  </form>
-  <p class="mt-5 mb-3 text-muted">&copy; 2018-2019</p>
+  <div style="max-width: 300px; margin: auto;">
+    <a class="btn btn-idm btn-lg btn-primary btn-block" role="button" href="{% url 'oidc_authentication_init' %}"><i class="fas fa-shield-alt"></i> SIGN IN WITH ASTRID IDM</a>
+  </div>
+  <p class="mt-5 mb-3 text-muted">&copy; 2018-2020</p>
 </div>
 {% endblock %}

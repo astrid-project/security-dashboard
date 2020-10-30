@@ -38,6 +38,25 @@ def generate_visjs_graph(service_file):
             all_edges.append({"from": "public", "to": name,
                               "id": "public-to-" + name})
 
+          if service["kind"] == "StatefulSet":
+            name = "{}-statefulset".format(service["metadata"]["name"])
+            try:
+              labels = service["metadata"]["labels"]
+            except:
+              labels = {}
+            selector = service["spec"]["selector"]
+            nodes.append({"id": name, "label": name, "group": "k8_sts",
+                          "labels": labels, "selector": selector})
+
+            labels = service["spec"]["template"]["metadata"]["labels"]
+            containers = service["spec"]["template"]["spec"]["containers"]
+            for container in containers:
+              container_name = container["name"]
+              nodes.append({"id": container_name, "label": container_name,
+                            "group": "k8_pod",
+                            "labels": labels, "selector": selector})
+              edges.append({"from": name ,"to": container_name})
+
           if service["kind"] == "Deployment":
             name = "{}-deployment".format(service["metadata"]["name"])
             try:
@@ -65,6 +84,9 @@ def generate_visjs_graph(service_file):
           continue
         if "-service" in nodeA["id"]:
           if "-deployment" in nodeB["id"]:
+            if nodeA["selector"] == nodeB["labels"]:
+              edges.append({"from": nodeA["id"], "to": nodeB["id"]})
+          if "-statefulset" in nodeB["id"]:
             if nodeA["selector"] == nodeB["labels"]:
               edges.append({"from": nodeA["id"], "to": nodeB["id"]})
         if nodeA["group"] == "docker":

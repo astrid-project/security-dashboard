@@ -14,4 +14,5 @@ urlpatterns = [
     path('services/', views.services, name='services'),
     path('monitoring/', views.monitoring, name='monitoring'),
     path('logs/', views.logs, name='logs'),
+    # path('test/', views.start_test),
 ]

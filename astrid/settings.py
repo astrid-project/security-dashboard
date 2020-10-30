@@ -31,15 +31,44 @@ MEDIA_ROOT = '/tmp/media'
 # Application definition
 CELERY_RESULT_BACKEND='redis://redis'
 CELERY_BROKER_URL='redis://redis'
+#CELERYBEAT_SCHEDULER='django_celery_beat.schedulers:DatabaseScheduler'
+
+
+OIDC_RP_CLIENT_ID = 'astrid-dashboard'
+OIDC_RP_CLIENT_SECRET = 'V81FT8CbUwwW1mGfFbEU2eo13KaOvnQyjCu4b1jAc54'
+OIDC_RP_SIGN_ALGO = 'RS256'
+
+OIDC_OP_JWKS_ENDPOINT = 'https://astrid.iam.example.com/am/oauth2/connect/jwk_uri'
+OIDC_OP_AUTHORIZATION_ENDPOINT = 'https://astrid.iam.example.com/am/oauth2/authorize'
+OIDC_OP_TOKEN_ENDPOINT = 'https://astrid.iam.example.com/am/oauth2/access_token'
+OIDC_OP_USER_ENDPOINT = 'https://astrid.iam.example.com/am/oauth2/userinfo'
+
+OIDC_VERIFY_SSL = False
+
+LOGIN_REDIRECT_URL = 'http://astrid.dashboard.example.com:30007/dashboard/'
+LOGOUT_REDIRECT_URL = 'http://astrid.dashboard.example.com:30007'
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
+}
+
+AUTHENTICATION_BACKENDS = (
+    'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 INSTALLED_APPS = [
     'dashboard.apps.DashboardConfig',
     'django.contrib.admin',
     'django.contrib.auth',
+    'mozilla_django_oidc',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+#    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +79,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'mozilla_django_oidc.middleware.SessionRefresh',
 ]
 
 ROOT_URLCONF = 'astrid.urls'

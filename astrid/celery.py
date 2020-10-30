@@ -1,8 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+import requests
 
 from celery import Celery
+
 
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'astrid.settings')
@@ -20,6 +22,19 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
 
+# @app.on_after_finalize.connect
+# def setup_periodic_tasks(sender, **kwargs):
+#     sender.add_periodic_task(10.0, periodic_echo.s(), name='add every 10')
+
+
+# @app.task
+# def periodic_echo():
+#     echo_server = "http://172.26.0.3:31115"
+
+#     r = requests.get(echo_server)
+#     print(r)
+
+#     return "echo success"
 
 @app.task(bind=True)
 def debug_task(self):
