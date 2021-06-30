@@ -3,9 +3,11 @@ djangorestframework
 pyyaml
 more-itertools
 celery
+bios
 #django-celery-beat
 mozilla-django-oidc
 redis
 kubernetes
 psycopg2-binary
 requests
+kafka-python

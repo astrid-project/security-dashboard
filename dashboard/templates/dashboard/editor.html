@@ -1,0 +1,316 @@
+{% extends "dashboard/_dashboard.html" %}
+{% load static %}
+
+{% block main %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h2>Security enrichment pipeline editor</h2>
+</div>
+<div class = "row">
+  <h2 class="col">Namespace: {{ service.service_name }}</h2>
+</div>
+<div class="row">
+  <p class="col"><i class="fas fa-info-circle"></i> Click to add a new ASTRID Agent</p>
+</div>
+<div class="row">
+  <div class="col" id="mynetwork" style='height:400px'>
+  </div>
+  <div class="col ml-5 mt-5 mb-5">
+    <p></p>
+    {% if algorithms %}
+    <h6 class="row btn text-muted" type="button" data-toggle="collapse" data-target="#algorithm"><i
+      class="fas fa-angle-down"></i> ASTRID algorithms</h6>
+    <div id="algorithm" class="collapse show">
+    {% for algorithm in algorithms %}
+    <div class="custom-control custom-switch">
+      <input type="checkbox" class="custom-control-input" id="{{ algorithm.algorithm_id }}" value="{{ algorithm.algorithm_id }}"
+        name="{{ algorithm.algorithm_id }}">
+      <label class="custom-control-label" for="{{ algorithm.algorithm_id }}" data-toggle="tooltip" data-placement="top" title="{{ algorithm.description }}">{{ algorithm.name }}</label>
+    </div>
+    <div>
+      <i class="fa fa-cogs" aria-hidden="true"></i>
+      {% autoescape off %}
+      <button style="margin-left: -10px;" type="button" class="btn btn-link" onclick="addAlgorithm('{{ algorithm.algorithm_id }}');">configure ...</button>
+      {% endautoescape %}
+      <!-- <i class="fa fa-edit" aria-hidden="true"></i><a href="{% url 'dashboard:editor' service.id %}"
+        style="margin-left: -10px;" class="btn btn-link" role="button">edit ...</a> -->
+    </div>
+    {% endfor %}
+    </div>
+    {% endif %}
+    <div class="mt-3">
+      <form action="{% url 'dashboard:customize' service.id %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">Create security services</button>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="row mb-5">
+  <div class="col-4">
+    <button id="saveNetwork" type="button" class="btn btn-danger">Save graph</button>
+  </div>
+</div>
+<div class="modal fade" id="addAgentModal" tabindex="-1" role="dialog" aria-labelledby="addAgentModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addAgentModalLabel">Add ASTRID Agent</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-sm">
+            <div class="list-group" id="list-tab" role="tablist">
+              <h5>ASTRID Agents</h5>
+              {% for agent in agents %}
+                <a class="list-group-item list-group-item-action" id="{{ agent.name }}-list" data-toggle="list" href="#{{ agent.name }}" role="tab" aria-controls="raw-1">{{ agent.name }}</a>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="col-sm">
+            <div class="tab-content" id="nav-tabContent">
+              {% for agent in agents %}
+              <div class="tab-pane fade" id="{{ agent.name }}" role="tabpanel" aria-labelledby="{{ agent.name }}-list">{{ agent.partner }}</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="nodeX" value=""/>
+        <input type="hidden" id="nodeY" value=""/>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="addAgent();">Add Agent</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="configurationModal" tabindex="-1" role="dialog" aria-labelledby="configurationModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="configurationModalLabel">Configure ASTRID Agent</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="configuration">Configuration</label>
+          <textarea class="form-control" id="configuration" name="configuration" rows="10">
+          </textarea>
+          <input type="hidden" id="nodeId" value=""/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button id="saveConfig" type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% csrf_token %}
+{% endblock %}
+{% block customjs %}
+<script type="text/javascript">
+  var nodes, edges, network, namespace;
+
+  function toJSON(obj) {
+    return JSON.stringify(obj, null, 4);
+  }
+
+  {% autoescape off %}
+  nodes = new vis.DataSet({{ nodes }});
+  edges = new vis.DataSet({{ edges }});
+  {% endautoescape %}
+
+  // you can extend the options like a normal JSON variable:
+  var options = {
+    interaction: { hover: true },
+    manipulation: {
+      enabled: true,
+      addNode: false,
+    },
+    groups: {
+      docker: {
+        shape: 'image',
+        image: "{% static 'dashboard/img/docker.png' %}"
+      },
+      k8_svc: {
+        shape: 'image',
+        image: "{% static 'dashboard/img/svc-256.png' %}",
+      },
+      k8_dep: {
+        shape: 'image',
+        image: "{% static 'dashboard/img/deploy-256.png' %}",
+      },
+      k8_sts: {
+        shape: 'image',
+        image: "{% static 'dashboard/img/sts-256.png' %}",
+      },      
+      k8_pod: {
+        shape: 'image',
+        image: "{% static 'dashboard/img/pod-256.png' %}",
+      },
+      public: {
+        shape: 'icon',
+        icon: {
+          face: "'Font Awesome 5 Free'",
+          weight: "bold", // Font Awesome 5 doesn't work properly unless bold.
+          code: '\uf0c2',
+          size: 50,
+          color: '#326ce5'
+        }
+      }
+    },
+    edges: {
+      smooth: {
+        type: "cubicBezier",
+        forceDirection: "none",
+        roundness: 0.3,
+      }
+    }
+  };
+
+  var data = {
+    nodes: nodes,
+    edges: edges
+  };
+  
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  var container = document.getElementById('mynetwork');
+  // create a network
+  var network = new vis.Network(container, data, options);
+
+  network.on("click", function (params) {
+    params.event = "[original event]";
+    if (params.nodes && params.nodes.length > 0) {
+      console.log(params);
+      var id = this.getNodeAt(params.pointer.DOM);
+      var node = nodes.get(id);
+      // $('#configuration').val(node.config);
+      // $('#nodeId').val(id);
+      // $("#configurationModal").modal();
+      console.log(node);
+
+      var nodeId = id.split('-').splice(-5).join('-');
+      console.log(nodeId);
+
+      var url = "{% url 'dashboard:config' %}";
+      $.ajax({
+        type: 'HEAD',
+        url: url + nodeId,
+        success: function() {
+          window.location.href = url + nodeId;
+        }
+      });
+     
+      // console.log(id);
+      // console.log(data);
+      // var url = "{% url 'dashboard:config' %}";
+      // $.ajax({
+      //   headers: {'X-CSRFToken': csrftoken},
+      //   url: url + node,
+      //   method: "POST",
+      //   data: {graph_id:id,name:'Test Agent',partner:'Test'},
+      //   success: function (response) {
+      //             window.location = url_mask;
+      //         },
+      // });
+    } else if (params.edges && params.edges.length > 0) {
+      console.log(params);
+    } else {
+      console.log(params);
+      $('#nodeX').val(params.pointer.canvas.x);
+      $('#nodeY').val(params.pointer.canvas.y);
+      $("#addAgentModal").modal();
+    }
+  });
+
+  $('#saveConfig').click(function() {
+    var config = $("#configuration").val();
+    var id = $('#nodeId').val();
+    nodes.update({id: id, config: config});
+  }); 
+
+
+  $('#saveNetwork').click(function() {
+    // console.log(nodes.get());
+    // nodes.forEach(getConnections);
+    var allNodes = nodes.get();
+    var exportJson = allNodes.map(getConnections);
+    // console.log(allNodes);
+    // console.log(allEdges);
+    console.log(JSON.stringify(exportJson, null, 4));
+
+    $.ajax({
+      headers: {'X-CSRFToken': csrftoken},
+      url: "{% url 'dashboard:editor' service.id %}",
+      method: "POST",
+      data: JSON.stringify(exportJson)
+    });
+
+  });
+
+  function getConnections(item, index) {
+    // console.log(network.getConnectedEdges(item.id));
+    // var networkJson = JSON.stringify(params, null, 4);
+    var connections = network.getConnectedNodes(item.id);
+    var connectedNodes = nodes.get(connections,{fields: ['label', 'kind']})
+
+    var connected = connectedNodes.filter(function(item){
+      return item.kind === "Pod"}).map(function(item){
+        return item.label});
+    return {id: item.id, label: item.label, kind: item.kind,
+            connections: connected, config: item.config}
+  }
+
+  // function createUUID() {
+  //  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  //     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+  //     return v.toString(16);
+  //  });
+  // }
+
+  function addAgent () {
+    var items = document.getElementsByClassName("list-group-item active");
+    var label = items.item(0).innerHTML;
+    var x = $('#nodeX').val();
+    var y = $('#nodeY').val();
+
+    // var uuid = createUUID();
+    // console.log(uuid);
+    // console.log(x);
+    // console.log(y);
+    // alert(items.item(0).innerHTML);
+    var updatedIds = nodes.update({ label: label, group: "k8_pod", kind: "Pod", x: x, y: y });
+    console.log(updatedIds);
+    var nodeId = updatedIds[0];
+    nodes.update({ id: nodeId, label: label + '-' + nodeId});
+
+    var url = "{% url 'dashboard:config' %}";
+      $.ajax({
+        headers: {'X-CSRFToken': csrftoken},
+        url: url + nodeId + '/',
+        method: "POST",
+        data: {name: label, partner: 'CNIT', service_id: "{{ service.id }}"},
+      });
+  }
+
+  function addAlgorithm (algorihtmId) {
+    var url = "{% url 'dashboard:algorithm' %}";
+      $.ajax({
+        headers: {'X-CSRFToken': csrftoken},
+        url: url,
+        method: "POST",
+        data: {id: algorihtmId, service_id: "{{ service.id }}"},
+        success: function() {
+          window.location.href = url;
+        }
+      });
+  }
+</script>
+{% endblock %}

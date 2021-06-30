@@ -1,14 +1,17 @@
 import yaml
 import json
+import uuid
 
 from more_itertools import collapse, unique_everseen
 
 def generate_visjs_graph(service_file):
-    service_dict = yaml.safe_load_all(service_file)
+    # service_dict = yaml.safe_load_all(service_file)
 
-    services = []
-    for service in service_dict: 
-      services.append(service)
+    # services = []
+    # for service in service_dict: 
+    #   services.append(service)
+
+    services = service_file
 
     nodes = []
     edges = []
@@ -34,10 +37,12 @@ def generate_visjs_graph(service_file):
               labels = {}
             selector = service["spec"]["selector"]
             nodes.append({"id": name, "label": name, "group": "k8_svc",
-                          "labels": labels, "selector": selector})
+                          "labels": labels, "selector": selector,
+                          "kind": "Service"})
             all_edges.append({"from": "public", "to": name,
                               "id": "public-to-" + name})
-
+            edges.append({"from": "public", "to": name,
+                          "id": "public-to-" + name})
           if service["kind"] == "StatefulSet":
             name = "{}-statefulset".format(service["metadata"]["name"])
             try:
@@ -46,16 +51,19 @@ def generate_visjs_graph(service_file):
               labels = {}
             selector = service["spec"]["selector"]
             nodes.append({"id": name, "label": name, "group": "k8_sts",
-                          "labels": labels, "selector": selector})
+                          "labels": labels, "selector": selector,
+                          "kind": "StatefulSet"})
 
             labels = service["spec"]["template"]["metadata"]["labels"]
             containers = service["spec"]["template"]["spec"]["containers"]
             for container in containers:
               container_name = container["name"]
-              nodes.append({"id": container_name, "label": container_name,
+              container_id = str(uuid.uuid4())
+              nodes.append({"id": container_id, "label": container_name,
                             "group": "k8_pod",
-                            "labels": labels, "selector": selector})
-              edges.append({"from": name ,"to": container_name})
+                            "labels": labels, "selector": selector,
+                            "kind": "Pod"})
+              edges.append({"from": name ,"to": container_id})
 
           if service["kind"] == "Deployment":
             name = "{}-deployment".format(service["metadata"]["name"])
@@ -65,16 +73,19 @@ def generate_visjs_graph(service_file):
               labels = {}
             selector = service["spec"]["selector"]
             nodes.append({"id": name, "label": name, "group": "k8_dep",
-                          "labels": labels, "selector": selector})
+                          "labels": labels, "selector": selector,
+                          "kind": "Deployment"})
 
             labels = service["spec"]["template"]["metadata"]["labels"]
             containers = service["spec"]["template"]["spec"]["containers"]
             for container in containers:
               container_name = container["name"]
-              nodes.append({"id": container_name, "label": container_name,
+              container_id = str(uuid.uuid4())
+              nodes.append({"id": container_id, "label": container_name,
                             "group": "k8_pod",
-                            "labels": labels, "selector": selector})
-              edges.append({"from": name ,"to": container_name})
+                            "labels": labels, "selector": selector,
+                            "kind": "Pod"})
+              edges.append({"from": name ,"to": container_id})
       else: 
           print("unknowm")
 

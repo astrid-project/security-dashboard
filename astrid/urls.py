@@ -27,6 +27,8 @@ router = routers.DefaultRouter()
 router.register(r'logs', views.LogViewSet)
 
 urlpatterns = [
+    #path('k8events/', views.k8events),
+    path('healthCheck/', views.healthCheck),
     path('oidc/', include('mozilla_django_oidc.urls')),
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),

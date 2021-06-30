@@ -1,15 +1,83 @@
 # Create your tasks here
 from __future__ import absolute_import, unicode_literals
+import pickle
+from bios.base import YAML_FILES
+from kafka import KafkaProducer
 
 from celery import Task
 from celery import shared_task
 
-from kubernetes import client, config, utils
+from kubernetes import client, config, utils, watch
 
 from dashboard.models import Log
 from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
+from django.core import serializers
 
+import yaml
+import json
+import time
+import base64
 import requests
+
+
+# Modified version from
+# https://github.com/kubernetes-client/python/blob/master/kubernetes/utils/create_from_yaml.py
+#
+# Copyright 2018 The Kubernetes Authors.
+# Licensed under the Apache License, Version 2.0 (the "License");
+def create_from_yaml(
+        k8s_client,
+        yaml_file,
+        verbose=False,
+        namespace="default",
+        **kwargs):
+    """
+    Perform an action from a yaml file. Pass True for verbose to
+    print confirmation information.
+    Input:
+    yaml_file: dict. YAML file content.
+    k8s_client: an ApiClient object, initialized with the client args.
+    verbose: If True, print confirmation from the create action.
+        Default is False.
+    namespace: string. Contains the namespace to create all
+        resources inside. The namespace must preexist otherwise
+        the resource creation will fail. If the API object in
+        the yaml file already contains a namespace definition
+        this parameter has no effect.
+    Available parameters for creating <kind>:
+    :param async_req bool
+    :param bool include_uninitialized: If true, partially initialized
+        resources are included in the response.
+    :param str pretty: If 'true', then the output is pretty printed.
+    :param str dry_run: When present, indicates that modifications
+        should not be persisted. An invalid or unrecognized dryRun
+        directive will result in an error response and no further
+        processing of the request.
+        Valid values are: - All: all dry run stages will be processed
+    Returns:
+        The created kubernetes API objects.
+    Raises:
+        FailToCreateError which holds list of `client.rest.ApiException`
+        instances for each object that failed to create.
+    """
+    #yml_document_all = yaml.safe_load_all(yaml_file)
+    yml_document_all = yaml_file
+
+    failures = []
+    k8s_objects = []
+    for yml_document in yml_document_all:
+        try:
+            created = utils.create_from_dict(k8s_client, yml_document, verbose,
+                                        namespace=namespace,
+                                        **kwargs)
+            k8s_objects.append(created)
+        except utils.FailToCreateError as failure:
+            failures.extend(failure.api_exceptions)
+    if failures:
+        raise utils.FailToCreateError(failures)
+
+    return k8s_objects
 
 
 class LogTask(Task):
@@ -34,7 +102,7 @@ class LogTask(Task):
         
 
 @shared_task
-def kubernetes_apply(yaml_file, namespace="default"):
+def kubernetes_apply(yaml_b64, namespace="default"):
     config.load_incluster_config()
 
     aApiClient = client.ApiClient()
@@ -47,11 +115,78 @@ def kubernetes_apply(yaml_file, namespace="default"):
         print(api_exception)
 
     try:
-        utils.create_from_yaml(aApiClient, yaml_file, namespace=namespace)
+        yaml_file = pickle.loads(base64.b64decode(yaml_b64))
+        print(yaml_file)
+        #yaml_file = base64.decodebytes(bytes(yaml_b64, "utf-8"))
+        create_from_yaml(aApiClient, yaml_file, namespace=namespace)
     except Exception as api_exception:
         print(api_exception)
 
-    return "apply submitted"
+    w = watch.Watch()
+    topic = settings.KAFKA_TOPIC
+    bootstrap = settings.KAFKA_BOOTSTRAP
+    
+    try:
+        for event in w.stream(v1.list_namespaced_pod, namespace):
+            msg = json.dumps(event["raw_object"])
+            print(msg)
+            try:
+                producer = KafkaProducer(bootstrap_servers=bootstrap)
+                producer.send(topic, msg.encode('utf-8'))
+            except Exception as kafka_exception:
+                print(kafka_exception)
+    except Exception as api_exception:
+        print(api_exception)
+
+    return "finished"
+
+
+@shared_task
+def kubernetes_get_pod(name, namespace):
+    config.load_incluster_config()
+
+    aApiClient = client.ApiClient()
+    v1 = client.CoreV1Api(aApiClient)
+
+    try:
+        p = v1.read_namespaced_pod(name=name,namespace=namespace)
+        print(p.status.phase, p.status.pod_ip)
+    except  Exception as api_exception:
+        print(api_exception)
+
+    return "get pod success"
+
+
+@shared_task
+def security_apply_policy(policy, configuration=None):
+    # for p in serializers.deserialize("json", policy):
+    #     msg = json.dumps(p,cls=DjangoJSONEncoder)
+    #     print(msg)
+    # if not (configuration is None):
+    #     for c in serializers.deserialize("json", configuration):
+    #         msg = json.dumps(c,cls=DjangoJSONEncoder)
+    #         print(msg)
+    topic = settings.KAFKA_TOPIC
+    bootstrap = settings.KAFKA_BOOTSTRAP
+
+    j = {}
+
+    p = json.loads(policy)
+    j["policy"] = p[0]
+    
+    if not (configuration is None):
+        c = json.loads(configuration)
+        j["configuration"] = c[0]
+        
+    msg = json.dumps(j)
+    print(msg)
+    try:
+        producer = KafkaProducer(bootstrap_servers=bootstrap)
+        producer.send(topic, msg.encode('utf-8'))
+    except Exception as kafka_exception:
+        print(kafka_exception)
+
+    return "policy applied success"
 
 
 @shared_task

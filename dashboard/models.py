@@ -15,10 +15,12 @@ class SecurityPolicy(models.Model):
     BASIC = 'B'
     PRO = 'P'
     UNLIMITED = 'U'
+    CUSTOM = 'C'
     SLA_CHOICES = (
         (BASIC, "Basic"),
         (PRO, "Pro"),
-        (UNLIMITED, "Unlimited")
+        (UNLIMITED, "Unlimited"),
+        (CUSTOM, "Custom")
     )
     policy_sla = models.CharField(max_length=1,
                                   choices=SLA_CHOICES,
@@ -39,6 +41,7 @@ class Service(models.Model):
     )
     service_name = models.CharField(max_length=200)
     service_file = models.FileField(upload_to='uploads/')
+    service_file_b64 = models.TextField(blank=True)
     last_modified = models.DateTimeField(auto_now=True)
     allowed_connections = models.TextField(blank=True)
     kibana_dashboard = models.TextField(blank=True)
@@ -72,3 +75,47 @@ class Log(models.Model):
     def __str__(self):
         return self.log_id
 
+
+class Agent(models.Model):
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    graph_id = models.CharField(max_length=200, unique=True)
+    name = models.CharField(max_length=200)
+    partner = models.CharField(max_length=200, blank=True)
+    description = models.CharField(max_length=500, blank=True)
+    config = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.graph_id
+
+
+class AgentTemplate(models.Model):
+    name = models.CharField(max_length=200)
+    partner = models.CharField(max_length=200, blank=True)
+    description = models.CharField(max_length=500, blank=True)
+    config = models.TextField(blank=True)
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class Algorithm(models.Model):
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    algorithm_id = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=200)
+    partner = models.CharField(max_length=200, blank=True)
+    description = models.CharField(max_length=500, blank=True)
+    config = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.algorithm_id
+
+
+class AlgorithmTemplate(models.Model):
+    name = models.CharField(max_length=200)
+    algorithm_id = models.CharField(max_length=20, unique=True)
+    partner = models.CharField(max_length=200, blank=True)
+    description = models.CharField(max_length=500, blank=True)
+    config = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name

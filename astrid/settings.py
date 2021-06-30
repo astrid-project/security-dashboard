@@ -33,6 +33,8 @@ CELERY_RESULT_BACKEND='redis://redis'
 CELERY_BROKER_URL='redis://redis'
 #CELERYBEAT_SCHEDULER='django_celery_beat.schedulers:DatabaseScheduler'
 
+KAFKA_BOOTSTRAP = 'kafka-cluster-kafka-bootstrap:9092'
+KAFKA_TOPIC = 'k8-events'
 
 OIDC_RP_CLIENT_ID = 'astrid-dashboard'
 OIDC_RP_CLIENT_SECRET = 'V81FT8CbUwwW1mGfFbEU2eo13KaOvnQyjCu4b1jAc54'
