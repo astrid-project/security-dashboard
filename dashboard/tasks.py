@@ -19,6 +19,7 @@ import json
 import time
 import base64
 import requests
+import uuid
 
 
 # Modified version from
@@ -102,7 +103,7 @@ class LogTask(Task):
         
 
 @shared_task
-def kubernetes_apply(yaml_b64, namespace="default"):
+def kubernetes_apply(yaml_b64, namespace="default", sc={}):
     config.load_incluster_config()
 
     aApiClient = client.ApiClient()
@@ -114,27 +115,77 @@ def kubernetes_apply(yaml_b64, namespace="default"):
     except Exception as api_exception:
         print(api_exception)
 
+    yaml_file = pickle.loads(base64.b64decode(yaml_b64))
+    print(yaml_file)
+
     try:
-        yaml_file = pickle.loads(base64.b64decode(yaml_b64))
-        print(yaml_file)
         #yaml_file = base64.decodebytes(bytes(yaml_b64, "utf-8"))
         create_from_yaml(aApiClient, yaml_file, namespace=namespace)
     except Exception as api_exception:
         print(api_exception)
 
+    agent_list = ['polycube','lcp']
+    watch_list = []
+    for yaml in yaml_file:
+        if yaml["kind"] == "Deployment":
+            if "annotations" in yaml["metadata"]:
+                for k,v in yaml["metadata"]["annotations"].items():
+                    if k in agent_list:
+                        port = None
+                        if k == "lcp":
+                            port = 5000
+                        if k == "polycube":
+                            port = 4000
+                        watch_list.append({"id": v,
+                                           "name": k,
+                                           "ip": None,
+                                           "port": port,
+                                           "exec_env_id": "idany",
+                                           "arguments": [],
+                                           "deployment": yaml["metadata"]["name"]
+                                          })
+    print(watch_list)
+
     w = watch.Watch()
     topic = settings.KAFKA_TOPIC
     bootstrap = settings.KAFKA_BOOTSTRAP
-    
+    security_controller_notified = False
+    security_controller_url = settings.SECURITY_CONTROLLER_URL
+
     try:
         for event in w.stream(v1.list_namespaced_pod, namespace):
+            #print(event)
             msg = json.dumps(event["raw_object"])
             print(msg)
-            try:
-                producer = KafkaProducer(bootstrap_servers=bootstrap)
-                producer.send(topic, msg.encode('utf-8'))
-            except Exception as kafka_exception:
-                print(kafka_exception)
+
+            if event['type'] == 'MODIFIED':
+                for i,name in enumerate([d["deployment"] for d in watch_list]):
+                    p = event['object']
+                    if name in p.metadata.name:
+                        agent_ip = p.status.pod_ip
+                        watch_list[i]["ip"] = agent_ip
+                        
+            if not any(v is None for v in [d["ip"] for d in watch_list]):
+                if not security_controller_notified:
+                    print(sc)
+                    if sc['deployment']['pipelines']:
+                        sc['deployment']['pipelines'][0]['agents'] = watch_list
+                    print(sc)
+                    print("send to security controller")
+                    msg = json.dumps(sc)
+                    print(msg)
+                    try:
+                        r = requests.post(security_controller_url,data=msg)
+                        print(r)
+                    except:
+                        pass
+                    security_controller_notified = True
+
+            # try:
+            #     producer = KafkaProducer(bootstrap_servers=bootstrap)
+            #     producer.send(topic, msg.encode('utf-8'))
+            # except Exception as kafka_exception:
+            #     print(kafka_exception)
     except Exception as api_exception:
         print(api_exception)
 

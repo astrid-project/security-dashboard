@@ -25,7 +25,7 @@
       <div id="basic" class="collapse show">
         {% for policy in basic_policies %}
         <div class="custom-control custom-switch">
-          {% if policy.policy_id in service_policies %}
+          {% if policy.policy_id in enabled_policies %}
           <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}"
             name="{{ policy.policy_id }}" checked>
           {% else %}
@@ -39,6 +39,9 @@
           <i class="fa fa-cogs" aria-hidden="true"></i>
           <button style="margin-left: -10px;" type="button" class="btn btn-link" data-toggle="modal"
             data-target="#{{ policy.policy_id }}Modal">configure ...</button>
+          <i class="fa fa-code" aria-hidden="true"></i>
+          <button style="margin-left: -10px;" type="button" class="btn btn-link" data-toggle="modal"
+            data-target="#{{ policy.policy_id }}Modal">code ...</button>            
           <i class="fa fa-edit" aria-hidden="true"></i><a href="{% url 'dashboard:editor' service.id %}"
             style="margin-left: -10px;" class="btn btn-link" role="button">edit ...</a>
           <div class="modal fade" id="{{ policy.policy_id }}Modal" tabindex="-1" role="dialog"
@@ -57,7 +60,7 @@
                     <label for="{{ policy.policy_id }}.CONFIG">Configuration</label>
                     <textarea class="form-control" id="{{ policy.policy_id }}.CONFIG"
                       name="{{ policy.policy_id }}.CONFIG"
-                      rows="10">{% for key, value in service_configurations.items %}{% ifequal policy.policy_id key %}{{ value }}{% endifequal %}{% endfor %}</textarea>
+                      rows="10"></textarea>
                   </div>
                 </div>
                 <div class="modal-footer">
@@ -110,23 +113,56 @@
       <div id="custom" class="collapse show">
         {% for policy in custom_policies %}
         <div class="custom-control custom-switch">
+        {% if policy.policy_id in enabled_policies %}
         <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}"
           name="{{ policy.policy_id }}" checked>
+        {% else %}
+        <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}"
+        name="{{ policy.policy_id }}">
+        {% endif %}
         <label class="custom-control-label" for="{{ policy.policy_id }}" data-toggle="tooltip" data-placement="top"
           title="{{ policy.policy_description }}">{{ policy.policy_name }}</label>
         </div>
         <div>
           <i class="fa fa-cogs" aria-hidden="true"></i>
           <button style="margin-left: -10px;" type="button" class="btn btn-link" data-toggle="modal"
-            data-target="#{{ policy.policy_id }}Modal">configure ...</button>
+            data-target="#{{ policy.policy_id }}ConfigModal">configure ...</button>
+          <i class="fa fa-code" aria-hidden="true"></i>
+          <button style="margin-left: -10px;" type="button" class="btn btn-link" data-toggle="modal"
+            data-target="#{{ policy.policy_id }}CodeModal">code ...</button>
           <i class="fa fa-edit" aria-hidden="true"></i><a href="{% url 'dashboard:editor' service.id %}"
             style="margin-left: -10px;" class="btn btn-link" role="button">edit ...</a>
-            <div class="modal fade" id="{{ policy.policy_id }}Modal" tabindex="-1" role="dialog"
-            aria-labelledby="{{ policy.policy_id }}ModalLabel" aria-hidden="true">
+          <div class="modal fade" id="{{ policy.policy_id }}CodeModal" tabindex="-1" role="dialog"
+            aria-labelledby="{{ policy.policy_id }}CodeModalLabel" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h5 class="modal-title" id="{{ policy.policy_id }}ModalLabel">{{ policy.policy_name }} configuration
+                  <h5 class="modal-title" id="{{ policy.policy_id }}CodeModalLabel">{{ policy.policy_name }} code
+                  </h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <label for="{{ policy.policy_id }}.CODE">Code</label>
+                    <textarea class="form-control" id="{{ policy.policy_id }}.CODE"
+                      name="{{ policy.policy_id }}.CODE"
+                      rows="10">{% for service_policy in service_policies %}{% if service_policy.policy_id == policy.policy_id %}{{ service_policy.code }}{% else %}{{ policy.code}}{% endif %}{% endfor %}</textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal fade" id="{{ policy.policy_id }}ConfigModal" tabindex="-1" role="dialog"
+            aria-labelledby="{{ policy.policy_id }}ConfigModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="{{ policy.policy_id }}ConfigModalLabel">{{ policy.policy_name }} configuration
                   </h5>
                   <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -137,7 +173,7 @@
                     <label for="{{ policy.policy_id }}.CONFIG">Configuration</label>
                     <textarea class="form-control" id="{{ policy.policy_id }}.CONFIG"
                       name="{{ policy.policy_id }}.CONFIG"
-                      rows="10">{% for key, value in service_configurations.items %}{% ifequal policy.policy_id key %}{{ value }}{% endifequal %}{% endfor %}</textarea>
+                      rows="10">{% for service_policy in service_policies %}{% if service_policy.policy_id == policy.policy_id %}{{ service_policy.configuration }}{% else %}{{ policy.configuration}}{% endif %}{% endfor %}</textarea>
                   </div>
                 </div>
                 <div class="modal-footer">
@@ -188,7 +224,6 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save changes</button>
       </div>
     </div>
   </div>
@@ -310,14 +345,14 @@
     //alert('clicked nodes:', clickedNodes);
     console.log('clicked nodes:', clickedNodes);
     $("#nodeModalLabel").text(clickedNodes[0]["label"]);
-    var labels = clickedNodes[0]["labels"];
+    var label = clickedNodes[0]["label"];
     // var labels_enc = encodeURIComponent(labels);
     // $("#nodeLabels").text(JSON.stringify(labels));
     // var namespace = "{{ service.service_name }}";
     // var url_mask = "url 'dashboard:k8resource' service.service_name labels".replace(/labels/, labels_enc.toString());
     $.ajax({
       url: "{% url 'dashboard:k8resource' %}",
-      data: { namespace: "{{ service.service_name }}", labels: JSON.stringify(labels) }
+      data: { namespace: "{{ service.service_name }}", label: label }
     }).then(function (data) {
       console.log(data);
       var obj = JSON.parse(data);
