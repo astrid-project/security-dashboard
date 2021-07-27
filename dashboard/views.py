@@ -463,7 +463,9 @@ def service(request, service_id):
     unlimited_policies = SecurityPolicyTemplate.objects.all().filter(policy_sla='U')
     custom_policies = SecurityPolicyTemplate.objects.all().filter(policy_sla='C')
     custom_service_policies = SecurityPolicy.objects.all().filter(service=service,policy_sla='C')
-    custom_policies = list(custom_policies) + list(custom_service_policies)
+    cp = [p for p in custom_service_policies if not p.policy_name in custom_policies.values_list('policy_name', flat=True)]
+    custom_policies = list(custom_policies) + list(cp)
+    #custom_policies = (custom_policies | custom_service_policies).distinct()
     service_policies = SecurityPolicy.objects.all().filter(service=service)
     
     enabled_policies = SecurityPolicy.objects.all().filter(service=service,active=True).values_list('policy_id', flat=True)

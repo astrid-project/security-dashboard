@@ -124,7 +124,7 @@ def kubernetes_apply(yaml_b64, namespace="default", sc={}):
     except Exception as api_exception:
         print(api_exception)
 
-    agent_list = ['polycube','lcp']
+    agent_list = ['polycube','lcp','scheduler','logstash']
     watch_list = []
     for yaml in yaml_file:
         if yaml["kind"] == "Deployment":
