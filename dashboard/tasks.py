@@ -131,7 +131,7 @@ def kubernetes_apply(yaml_b64, namespace="default", sc={}):
             if "annotations" in yaml["metadata"]:
                 for k,v in yaml["metadata"]["annotations"].items():
                     if k in agent_list:
-                        port = None
+                        port = ""
                         if k == "lcp":
                             port = 5000
                         if k == "polycube":
@@ -156,7 +156,7 @@ def kubernetes_apply(yaml_b64, namespace="default", sc={}):
         for event in w.stream(v1.list_namespaced_pod, namespace):
             #print(event)
             msg = json.dumps(event["raw_object"])
-            print(msg)
+            #print(msg)
 
             if event['type'] == 'MODIFIED':
                 for i,name in enumerate([d["deployment"] for d in watch_list]):
@@ -167,10 +167,10 @@ def kubernetes_apply(yaml_b64, namespace="default", sc={}):
                         
             if not any(v is None for v in [d["ip"] for d in watch_list]):
                 if not security_controller_notified:
-                    print(sc)
+                    #print(sc)
                     if sc['deployment']['pipelines']:
                         sc['deployment']['pipelines'][0]['agents'] = watch_list
-                    print(sc)
+                    #print(sc)
                     print("send to security controller")
                     msg = json.dumps(sc)
                     print(msg)
