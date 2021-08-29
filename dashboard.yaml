@@ -281,7 +281,8 @@ spec:
             containers:
             - name: celery
               #image: gcr.io/elite-reserve-295812/security-dashboard
-              image: bertl4398/dashboard
+              #image: bertl4398/dashboard
+              image: dashboard
               args:
                 - celery
                 - -A
@@ -289,10 +290,12 @@ spec:
                 - worker
                 - -l
                 - DEBUG
-              imagePullPolicy: Always
+              #imagePullPolicy: Always
+              imagePullPolicy: Never
             - name: celery-beat
               #image: gcr.io/elite-reserve-295812/security-dashboard
-              image:  bertl4398/dashboard
+              #image:  bertl4398/dashboard
+              image: dashboard
               args:
                 - celery
                 - -A
@@ -300,7 +303,8 @@ spec:
                 - beat
                 - -l
                 - DEBUG
-              imagePullPolicy: Always
+              #imagePullPolicy: Always
+              imagePullPolicy: Never
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -322,7 +326,8 @@ spec:
             containers:
               - name: dashboard
                 #image: gcr.io/elite-reserve-295812/security-dashboard
-                image: bertl4398/dashboard
+                #image: bertl4398/dashboard
+                image: dashboard
                 command: ["/bin/sh", "-c"]
                 args: ["python manage.py makemigrations dashboard && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
                 ports:
@@ -330,7 +335,8 @@ spec:
                 volumeMounts:
                   - name: dashboard-data
                     mountPath: /tmp
-                imagePullPolicy: Always
+                #imagePullPolicy: Always
+                imagePullPolicy: Never
             volumes:
               - name: dashboard-data
                 persistentVolumeClaim:

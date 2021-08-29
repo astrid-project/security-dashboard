@@ -381,7 +381,7 @@ def service(request, service_id):
 
     if request.method == 'POST':
         SecurityPolicy.objects.all().filter(service=service,active=True).update(active=False)
-        yaml_b64 = service.service_file_orig_b64
+        yaml_b64 = service.service_file_b64
         yaml_file = pickle.loads(base64.b64decode(yaml_b64))
         yaml_file, nodes, edges = generate_visjs_graph(yaml_file)
         service.service_file_b64 = str(base64.b64encode(
@@ -444,7 +444,7 @@ def service(request, service_id):
                     print("update graph")
                     policy_id = k.split('.')[0]
                     p = SecurityPolicy.objects.get(service=service,policy_id=policy_id)
-                    yaml_b64 = p.service_file_b64
+                    yaml_b64 = service.service_file_b64
                     yaml_file = pickle.loads(base64.b64decode(yaml_b64))
                     yaml_file, nodes, edges = generate_visjs_graph(yaml_file)
                     service.service_file_b64 = str(base64.b64encode(
