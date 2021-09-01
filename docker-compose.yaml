@@ -14,8 +14,8 @@ services:
     ports:
         - "6379:6379"
   dashboard:
-    #image: "bertl4398/security_dashboard:latest"
-    build: .
+    image: "bertl4398/dashboard:latest"
+    #build: .
     command: >
         bash -c "python manage.py makemigrations
         && python manage.py migrate
@@ -28,15 +28,15 @@ services:
       - db
       - redis
   celery:
-    #image: "bertl4398/security_dashboard:latest"
-    build: .
+    image: "bertl4398/dashboard:latest"
+    #build: .
     command: celery -A astrid worker -l INFO
     depends_on:
       - db
       - redis
   celery:
-    #image: "bertl4398/security_dashboard:latest"
-    build: .
+    image: "bertl4398/dashboard:latest"
+    #build: .
     command: celery -A astrid beat -l INFO
     depends_on:
       - db

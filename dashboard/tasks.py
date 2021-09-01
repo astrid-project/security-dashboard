@@ -124,7 +124,9 @@ def kubernetes_apply(yaml_b64, namespace="default", sc={}):
     except Exception as api_exception:
         print(api_exception)
 
-    agent_list = ['polycube','lcp','scheduler','logstash']
+    agent_list = ['polycube','lcp','scheduler','logstash',
+                  'packetbeat','cubebeat','nprobe','filebeat',
+                  'metricbeat']
     watch_list = []
     for yaml in yaml_file:
         if yaml["kind"] == "Deployment":
@@ -132,15 +134,19 @@ def kubernetes_apply(yaml_b64, namespace="default", sc={}):
                 for k,v in yaml["metadata"]["annotations"].items():
                     if k in agent_list:
                         port = ""
+                        name = k
                         if k == "lcp":
                             port = 5000
-                        if k == "polycube":
-                            port = 4000
+                            name = "dynmon"
+                        # if k == "polycube":
+                        #     port = 4000
+                        if k in ['scheduler','polycube','logstash']:
+                            continue
                         watch_list.append({"id": v,
-                                           "name": k,
+                                           "name": name,
                                            "ip": None,
                                            "port": port,
-                                           "exec_env_id": "idany",
+                                           "exec_env_id": "sc-ebpf-156873495 upf-8",
                                            "arguments": [],
                                            "deployment": yaml["metadata"]["name"]
                                           })

@@ -256,22 +256,26 @@ def configureAgent(request, graph_id):
 @login_required
 def editor(request, service_id):
     service = Service.objects.get(id=service_id, owner_id=request.user.id)
-    
+    pipeline = None
     if request.method == 'POST':
         data = None
         try:
             data = json.loads(request.body)
             print(data)
-        except:
+        except Exception as e:
             print("ERROR")
+            print(e)
 
         yaml_b64 = service.service_file_b64
         yaml_file = pickle.loads(base64.b64decode(yaml_b64))
+        print(yaml_file)
 
         if data:
             for d in data:
                 if d["connections"]:
                     for y in yaml_file:
+                        if not 'annotations' in y['metadata']:
+                            continue
                         if y['metadata']['annotations']['graphId'] == d['id']:
                             for c in d["connections"]:
                                 at = AgentTemplate.objects.get(name=c)
@@ -285,7 +289,7 @@ def editor(request, service_id):
                                     image=at.image
                                 )
                                 a.save()
-                                container = {'image': a.image, 'name': a.name, 'args': ['sleep', '1000']}
+                                container = {'image': a.image, 'name': a.name} #, 'args': ['sleep', '1000']}
                                 y["spec"]["template"]["spec"]["containers"].append(container)
                                 y['metadata']['annotations'][a.name] = str(a.uuid)
         else:
@@ -300,7 +304,8 @@ def editor(request, service_id):
                         a = Algorithm.objects.get(service=service,algorithm_id=v)
                         a.active = True
                         a.save()
-                    except:
+                    except Exception as e:
+                        print(e)
                         at = AlgorithmTemplate.objects.get(algorithm_id=v)
                         a = Algorithm(
                             service=service,
@@ -325,13 +330,14 @@ def editor(request, service_id):
                 pipeline = SecurityPolicy.objects.get(service=service,policy_name=pipelineName)
                 pipeline.active = True
                 pipeline.save()
-            except:
+            except Exception as e:
+                print(e)
                 id_num = 111111
                 try:
                     latest = SecurityPolicy.objects.latest('policy_id')
                     id_num = int(latest.policy_id.split('_')[1])
-                except:
-                    pass
+                except Exception as e:
+                    print(e)
                 pipeline = SecurityPolicy(
                     service=service,
                     policy_sla="C",
@@ -348,10 +354,11 @@ def editor(request, service_id):
         service.graph_b64 = str(base64.b64encode(
             pickle.dumps({'nodes': nodes, 'edges': edges})), "utf-8")    
         service.save()
-
-        pipeline.service_file_b64 = str(base64.b64encode(
-            pickle.dumps(yaml_file)), "utf-8")
-        pipeline.save()
+        
+        if pipeline:
+            pipeline.service_file_b64 = str(base64.b64encode(
+                pickle.dumps(yaml_file)), "utf-8")
+            pipeline.save()
 
         return redirect(reverse('dashboard:service', kwargs={'service_id': service_id}))
 

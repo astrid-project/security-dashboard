@@ -45,11 +45,19 @@ def generate_visjs_graph(service_file):
                   containerId = str(uuid.uuid4())
                   y['metadata']['annotations'][c['name']] = containerId
 
-              containers.append({
+              if c['name'] in ['scheduler','polycube','logstash']:
+                containers.append({
                   'id': containerId,
                   'label': c['name'],
-                  'group': "k8_pod"
-              })
+                  'group': "k8_pod",
+                  'hidden': 1
+                })
+              else:
+                containers.append({
+                    'id': containerId,
+                    'label': "dynmon" if c['name'] == "lcp" else c['name'],
+                    'group': "k8_pod",
+                })
 
               edges.append({"from": graphId, "to": containerId})
 
