@@ -36,7 +36,8 @@ CELERY_BROKER_URL='redis://redis'
 KAFKA_BOOTSTRAP = 'kafka-cluster-kafka-bootstrap:9092'
 KAFKA_TOPIC = 'k8-events'
 
-SECURITY_CONTROLLER_URL = 'https://reqbin.com/echo/post/json'
+#SECURITY_CONTROLLER_URL = 'https://reqbin.com/echo/post/json'
+SECURITY_CONTROLLER_URL = 'http://172.21.100.31:8083/controller/register/deployement'
 
 OIDC_RP_CLIENT_ID = 'astrid-dashboard'
 OIDC_RP_CLIENT_SECRET = 'V81FT8CbUwwW1mGfFbEU2eo13KaOvnQyjCu4b1jAc54'
