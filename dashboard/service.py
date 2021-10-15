@@ -1,115 +1,71 @@
-import yaml
-import json
+import uuid
 
-from more_itertools import collapse, unique_everseen
 
 def generate_visjs_graph(service_file):
-    service_dict = yaml.safe_load_all(service_file)
+  services = []
+  deployments = []
+  pods = []
+  containers = []
 
-    services = []
-    for service in service_dict: 
-      services.append(service)
+  edges = []
 
-    nodes = []
-    edges = []
-    all_edges = []
+  for y in service_file: 
+      if y['kind'] == 'Service':
+          if 'annotations' in y['metadata']:
+              if 'graphId' in y['metadata']['annotations']:
+                  graphId = y['metadata']['annotations']['graphId']
+          else:
+              graphId = str(uuid.uuid4())
+              y['metadata']['annotations'] = {'graphId': graphId}
+          selector = y['spec']['selector']
+          services.append({
+              'id': graphId,
+              'label': y['metadata']['name'],
+              'group': "k8_svc",
+              'selector': selector
+          })
+      if y['kind'] == 'Deployment':
+          if 'annotations' in y['metadata']:
+              if 'graphId' in y['metadata']['annotations']:
+                  graphId = y['metadata']['annotations']['graphId']
+          else:
+              graphId = str(uuid.uuid4())
+              y['metadata']['annotations'] = {'graphId': graphId}
+          selector = y['metadata']['labels']
+          deployments.append({
+              'id': graphId,
+              'label': y['metadata']['name'],
+              'group': "k8_dep",
+              'selector': selector
+          })
+          for c in y['spec']['template']['spec']['containers']:
+              if c['name'] in y['metadata']['annotations']:
+                  containerId = y['metadata']['annotations'][c['name']]
+              else:
+                  containerId = str(uuid.uuid4())
+                  y['metadata']['annotations'][c['name']] = containerId
 
-    nodes.append({"id": "public", "label": "public", "group": "public"})
+              if c['name'] in ['scheduler','polycube','logstash']:
+                containers.append({
+                  'id': containerId,
+                  'label': c['name'],
+                  'group': "k8_pod",
+                  'hidden': 1
+                })
+              else:
+                containers.append({
+                    'id': containerId,
+                    'label': "dynmon" if c['name'] == "lcp" else c['name'],
+                    'group': "k8_pod",
+                })
 
-    for service in services:    
-      if 'version' in service.keys(): 
-          #print("Docker Compose")
-          for compose_service in service["services"]:
-            nodes.append({"id": compose_service, "label": compose_service,
-                          "group": "docker"})
-            all_edges.append({"from": "public", "to": compose_service,
-                              "id": "public-to-" + compose_service})
-      elif 'apiVersion' in service.keys(): 
-          #print("Kubernetes")
-          if service["kind"] == "Service":
-            name = "{}-service".format(service["metadata"]["name"])
-            try:
-              labels = service["metadata"]["labels"]
-            except:
-              labels = {}
-            selector = service["spec"]["selector"]
-            nodes.append({"id": name, "label": name, "group": "k8_svc",
-                          "labels": labels, "selector": selector})
-            all_edges.append({"from": "public", "to": name,
-                              "id": "public-to-" + name})
+              edges.append({"from": graphId, "to": containerId})
 
-          if service["kind"] == "StatefulSet":
-            name = "{}-statefulset".format(service["metadata"]["name"])
-            try:
-              labels = service["metadata"]["labels"]
-            except:
-              labels = {}
-            selector = service["spec"]["selector"]
-            nodes.append({"id": name, "label": name, "group": "k8_sts",
-                          "labels": labels, "selector": selector})
+  for s in services:
+      for d in deployments:
+          if s['selector'] == d['selector']:
+              edges.append({"from": s['id'], "to": d['id']})
 
-            labels = service["spec"]["template"]["metadata"]["labels"]
-            containers = service["spec"]["template"]["spec"]["containers"]
-            for container in containers:
-              container_name = container["name"]
-              nodes.append({"id": container_name, "label": container_name,
-                            "group": "k8_pod",
-                            "labels": labels, "selector": selector})
-              edges.append({"from": name ,"to": container_name})
+  nodes = services + deployments + pods + containers
 
-          if service["kind"] == "Deployment":
-            name = "{}-deployment".format(service["metadata"]["name"])
-            try:
-              labels = service["metadata"]["labels"]
-            except:
-              labels = {}
-            selector = service["spec"]["selector"]
-            nodes.append({"id": name, "label": name, "group": "k8_dep",
-                          "labels": labels, "selector": selector})
-
-            labels = service["spec"]["template"]["metadata"]["labels"]
-            containers = service["spec"]["template"]["spec"]["containers"]
-            for container in containers:
-              container_name = container["name"]
-              nodes.append({"id": container_name, "label": container_name,
-                            "group": "k8_pod",
-                            "labels": labels, "selector": selector})
-              edges.append({"from": name ,"to": container_name})
-      else: 
-          print("unknowm")
-
-    for nodeA in nodes:
-      for nodeB in nodes:
-        if nodeA["id"] == nodeB["id"]:
-          continue
-        if "-service" in nodeA["id"]:
-          if "-deployment" in nodeB["id"]:
-            if nodeA["selector"] == nodeB["labels"]:
-              edges.append({"from": nodeA["id"], "to": nodeB["id"]})
-          if "-statefulset" in nodeB["id"]:
-            if nodeA["selector"] == nodeB["labels"]:
-              edges.append({"from": nodeA["id"], "to": nodeB["id"]})
-        if nodeA["group"] == "docker":
-          if nodeB["group"] == "docker":
-            edges.append({"from": nodeA["id"], "to": nodeB["id"]})
-
-    # edges = [{"from": a, "to": b, "arrows": "to",
-    #           "label": "depends on", "color": {"color": "#ff0000",
-    #                                            "opacity": 0.3}}
-    #          for a in service_dict['services']
-    #          for b in service_dict['services']
-    #          if b in service_dict['services'][a].get('depends_on',[])]
-
-    # all_edges = [[{"from": a, "to": b, "arrows": "to",
-    #                "id": a + "-to-" + b},
-    #               {"from": a, "to": "public", "arrows": "to",
-    #                "id": a + "-to-public"},
-    #               {"from": "public", "to": a, "arrows": "to",
-    #                 "id": "public-to-" + a}]
-    #              for a in service_dict['services']
-    #              for b in service_dict['services']
-    #              if a is not b]
-
-    # all_edges = list(unique_everseen(collapse(all_edges, base_type=dict)))
-
-    return nodes, edges, all_edges
+  return service_file, nodes, edges

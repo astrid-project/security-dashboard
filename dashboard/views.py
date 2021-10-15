@@ -1,10 +1,20 @@
+import re
 import json
+import base64
+import pickle
+import bios
+import urllib
+import uuid
+import copy
+from itertools import chain
+
+from kubernetes import config, client
 
 from urllib.parse import urlparse
 
-from django.urls import resolve
+from django.urls import resolve, reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.http import Http404, HttpResponseRedirect, HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
@@ -12,8 +22,11 @@ from django.contrib.auth import logout as django_logout
 from django.core.files.storage import default_storage
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
+from django.core.serializers.json import DjangoJSONEncoder
+from django.core import serializers
 
 from django.contrib.auth.models import User, Group
+from kubernetes.client import configuration
 from rest_framework import viewsets
 from rest_framework import permissions
 from rest_framework import generics
@@ -21,16 +34,85 @@ from rest_framework import generics
 from .serializers import UserSerializer, GroupSerializer, LogSerializer
 
 from .service import generate_visjs_graph
-from .models import Service, SecurityPolicy, Log, Configuration
-from .tasks import test, kubernetes_apply, test_echo
+from .models import Algorithm, Service, SecurityPolicy, SecurityPolicyTemplate, Log, Agent, AgentTemplate, AlgorithmTemplate
+from .tasks import test, kubernetes_apply, kubernetes_get_pod, test_echo, security_apply_policy
+from .forms import CubebeatForm, AlgorithmForm
+
+sc = {'name': 'astrid-agent', 'image': 'busybox', 'command': ['/bin/sh'], 'args': ['-c','while true; do sleep 5; done']}
+
 
 @csrf_exempt
-def start_test(request):
-    if request.method == 'GET':
-        test_echo()
+def healthCheck(request):
     return HttpResponse(status=200)
 
-  
+
+def get_k8_resource(request):
+    namespace = request.GET.get('namespace', None)
+    label = request.GET.get('label', None)
+    print(f'{namespace} {label}')
+
+    # s = json.loads(label)
+    # selector = ','.join([f'{k}={s[k]}' for k in s])
+
+    response = {}
+
+    try:
+        config.load_incluster_config()
+
+        aApiClient = client.ApiClient()
+        v1 = client.CoreV1Api(aApiClient)
+
+        res = v1.list_namespaced_pod(namespace)
+
+        j = {}
+        for item in res.items:
+            d = item.to_dict()
+            if label in [c['name'] for c in d['spec']['containers']]:
+                j = {"host_ip": d["status"]["host_ip"], 
+                    "pod_ip": d["status"]["pod_ip"], 
+                    "phase": d["status"]["phase"], 
+                    "start_time": d["status"]["start_time"], 
+                    "containers": [{"name": status["name"],
+                                    "ready": status["ready"]} for status in d["status"]["container_statuses"]]}
+
+            response = json.dumps(j, cls=DjangoJSONEncoder)
+    except:
+        pass
+
+    return JsonResponse(response, safe=False)
+
+
+# @csrf_exempt
+# def start_test(request):
+#     if request.method == 'GET':
+#         test_echo()
+#     return HttpResponse(status=200)
+
+
+@csrf_exempt
+def k8events(request):
+    u = User.objects.filter(username='system')
+
+    if not u:
+        u = User.objects.create_user('system', 'system@astrid.local', 'system')
+    else:
+        u = User.objects.get(username='system')
+    try:
+        s = json.loads(request.body)
+        if s["reason"] == "Started":
+            if s["involvedObject"]["kind"] == "Pod":
+                pod_name = s["involvedObject"]["name"]
+                pod_namespace = s["involvedObject"]["namespace"]
+
+                t = kubernetes_get_pod.delay(pod_name, pod_namespace)
+                l = Log(owner=u, log_id=t.id, log_status=t.status)
+                l.save()
+    except Exception as ex:
+        print(ex)
+
+    return HttpResponse(status=200)
+
+
 @login_required
 def deploy(request, service_id):
 
@@ -38,115 +120,385 @@ def deploy(request, service_id):
         Service, id=service_id, owner_id=request.user.id)
 
     namespace = service.service_name
-    path = service.service_file.path
+    yaml_b64 = service.service_file_b64
+    enabled_policies = SecurityPolicy.objects.all().filter(service=service,active=True)
+    enabled_algorithms = Algorithm.objects.all().filter(service=service,active=True)
+
+    algorithms = [
+        {
+            "id": a.uuid,
+            "name": a.name,
+            "arguments": []
+
+        } for a in enabled_algorithms]
+
+    pipelines = [
+        {
+            "id": p.policy_uuid,
+            "name": p.policy_name,
+            "status": "started",
+            "agents": [],
+            "algorithms": algorithms,
+            "configuration": p.configuration
+        } for p in enabled_policies]
+
+    sc = {
+        "deployment": {
+            "id": service.uuid,
+            "name": service.service_name,
+            "namespace": service.service_name,
+            "pipelines": pipelines
+        }
+    }
+
     orchestrator = request.POST.get('orchestratorSelect', None)
 
-    print(f"Deploy {path} via {orchestrator} at {namespace}")
-
+    print(f"Deploy via {orchestrator} at {namespace}")
+    print(sc)
+        
     if orchestrator == "kubernetes":
-        t = kubernetes_apply.delay(path, namespace)
-        l = Log(owner=request.user, log_id=t.id, log_status=t.status)
+        t = kubernetes_apply.delay(yaml_b64, namespace, sc)
+        l = Log(owner=request.user, log_id=t.id,
+                log_message=f"watching {namespace}", log_status=t.status)
         l.save()
 
-    # t = test.delay("deploy")
-    # l = Log(owner=request.user, log_id=t.id, log_status=t.status)
-    # l.save()
-
-    # next = request.POST.get('next', '/')
-    # return HttpResponseRedirect(next)
-    messages.add_message(request, messages.INFO, 'Deployment scheduled',
-                        extra_tags='alert alert-primary')
-
-    logs_list = Log.objects.filter(owner_id=request.user.id)
-    return render(request, 'dashboard/logs.html',
-                  {'logs_list': logs_list})
-
+    return redirect(reverse('dashboard:service', kwargs={'service_id': service_id}))
 
 @login_required
 def logs(request):
     # t = test.delay("hello")
     # l = Log(owner=request.user, log_id=t.id, log_status=t.status)
     # l.save()
-    logs_list = Log.objects.filter(owner_id=request.user.id)
+    logs_list = Log.objects.filter()
 
     return render(request, 'dashboard/logs.html',
                   {'logs_list': logs_list})
 
 
 @login_required
-def service(request, service_id):
-    service = Service.objects.get(id=service_id, owner_id=request.user.id)
-    allowed_connections = []
-    try:
-        allowed_connections = json.loads(service.allowed_connections)
-        # print(allowed_connections)
-    except json.JSONDecodeError:
+def createSecurityPolicy(request, service_id):
+    if request.method == 'POST':
+        # policy, created = SecurityPolicy.objects.update_or_create(
+        #     policy_sla = 'C',
+        #     policy_name = 'Custom-' + str(uuid.uuid4()),
+        #     policy_description = "custom security service",
+        #     policy_id = 'ASTRID_5555'
+        # )
+        # service = Service.objects.get(id=service_id, owner_id=request.user.id)
+        # service.policies.add(policy)
+        # service.save()
         pass
 
+    return redirect(reverse('dashboard:service', kwargs={'service_id': service_id}))
+
+
+@login_required
+def configureAlgorithm(request):
+    context = {}
     if request.method == 'POST':
-        allowed_connections = []
-        enabled_policies = []
-        for key, value in request.POST.items():
-            if "-to-" in key:
-                allowed_connections.append(key)
-            if "ASTRID_" in key:
-                if ".CONFIG" in key:
-                    policy_id = key.split(".")[0]
-                    policy = get_object_or_404(SecurityPolicy, policy_id=policy_id)
-                    config = request.POST[key]
+        print(request.POST)
+        algorithm_id = request.POST.get('id', 'ASTRID_9999')
+    
+    algorithm_id = 'ASTRID_9999'
+    algorithm = AlgorithmTemplate.objects.get(algorithm_id=algorithm_id)
+    form = AlgorithmForm()
+
+    context = {"algorithm": algorithm, "form": form}
+        
+    return render(request, 'dashboard/algorithm.html', context)
+
+
+@login_required
+def configureAgent(request, graph_id):
+    context = {}
+    # if request.method == 'POST':
+    #     print(request.POST)
+    #     conf_str = json.dumps(request.POST)
+    #     print(conf_str)
+
+    #     service_id = request.POST.get('service_id', None)
+    #     name = request.POST.get('name', None)
+    #     partner = request.POST.get('partner', None)
+
+    #     service = Service.objects.get(id=service_id, owner_id=request.user.id)
+
+    #     agent, created = Agent.objects.update_or_create(
+    #         service = service,
+    #         graph_id = graph_id,
+    #         name = name,
+    #         partner = partner,
+    #         defaults={'config': conf_str},
+    #     )
+
+    #     return redirect(reverse('dashboard:editor', kwargs={'service_id': service_id}))
+
+    agent = Agent.objects.get(uuid=graph_id)
+    print(agent)
+    
+    graph = pickle.loads(base64.b64decode(agent.service.graph_b64))
+    nodes = graph['nodes']
+    edges = graph['edges']
+
+    # print(nodes)
+    # print(edges)
+
+    agents = AgentTemplate.objects.all()
+    algorithms = AlgorithmTemplate.objects.all()
+
+    context = {'nodes': nodes, 'edges': edges,
+               'service': agent.service,
+               'agents': agents, 'algorithms': algorithms,
+               'agent': agent}
+
+    return render(request, 'dashboard/editor.html', context)
+
+
+@login_required
+def editor(request, service_id):
+    service = Service.objects.get(id=service_id, owner_id=request.user.id)
+    pipeline = None
+    if request.method == 'POST':
+        data = None
+        try:
+            data = json.loads(request.body)
+            print(data)
+        except Exception as e:
+            print("ERROR")
+            print(e)
+
+        yaml_b64 = service.service_file_b64
+        yaml_file = pickle.loads(base64.b64decode(yaml_b64))
+        print(yaml_file)
+
+        if data:
+            for d in data:
+                if d["connections"]:
+                    for y in yaml_file:
+                        if not 'annotations' in y['metadata']:
+                            continue
+                        if y['metadata']['annotations']['graphId'] == d['id']:
+                            for c in d["connections"]:
+                                at = AgentTemplate.objects.get(name=c)
+                                a = Agent(
+                                    service=service,
+                                    name=at.name,
+                                    agent_id=at.agent_id,
+                                    partner=at.partner,
+                                    description=at.description,
+                                    configuration=at.configuration,
+                                    image=at.image
+                                )
+                                a.save()
+                                container = {'image': a.image, 'name': a.name,
+                                             'volumeMounts': [
+                                                 {"name": "packetbeat",
+                                                  "mountPath": "/etc/packetbeat/packetbeat.yml",
+                                                  "subPath": "packetbeat.yml"
+                                                 }
+                                             ]
+                                            } #, 'args': ['sleep', '1000']}
+                                y["spec"]["template"]["spec"]["containers"].append(container)
+                                y['metadata']['annotations'][a.name] = str(a.uuid)
+        else:
+            Algorithm.objects.all().filter(service=service,active=True).update(active=False)
+            enabled = False
+            for k,v in request.POST.items():
+                print(k,v)
+                if re.match(r'ASTRID_\d+$',k):
+                    print("create/update algorithm from template")
+                    enabled = True
                     try:
-                        obj = Configuration.objects.get(service=service, policy=policy)
-                        obj.config = config.lstrip(" \t\n")
-                        obj.save()
-                    except Configuration.DoesNotExist:
-                        obj = Configuration(service=service, policy=policy, config=config)
-                        obj.save()
-                else:
-                    enabled_policies.append(key)
+                        a = Algorithm.objects.get(service=service,algorithm_id=v)
+                        a.active = True
+                        a.save()
+                    except Exception as e:
+                        print(e)
+                        at = AlgorithmTemplate.objects.get(algorithm_id=v)
+                        a = Algorithm(
+                            service=service,
+                            name=at.name,
+                            algorithm_id=at.algorithm_id,
+                            partner=at.partner,
+                            description=at.description,
+                            active=True
+                        )
+                        a.save()
+            for k,v in request.POST.items():
+                if re.match(r'ASTRID_\d+\.ALGORITHM.CONFIG$',k) and enabled:
+                    if v:
+                        print("update configuration")
+                        algorithm_id = k.split('.')[0]
+                        a = Algorithm.objects.get(service=service,algorithm_id=algorithm_id)
+                        a.configuration = v.lstrip(" \t\n")
+                        a.save()
 
-        allowed_connections = list(set(allowed_connections))
-        service.allowed_connections = json.dumps(allowed_connections)
-        service.policies.clear()
-        for policy_id in enabled_policies:
             try:
-                p = SecurityPolicy.objects.get(policy_id=policy_id)
-                service.policies.add(p)
-            except SecurityPolicy.DoesNotExist:
-                pass
+                pipelineName = request.POST["pipelineName"]
+                pipeline = SecurityPolicy.objects.get(service=service,policy_name=pipelineName)
+                pipeline.active = True
+                pipeline.save()
+            except Exception as e:
+                print(e)
+                id_num = 111111
+                try:
+                    latest = SecurityPolicy.objects.latest('policy_id')
+                    id_num = int(latest.policy_id.split('_')[1])
+                except Exception as e:
+                    print(e)
+                pipeline = SecurityPolicy(
+                    service=service,
+                    policy_sla="C",
+                    policy_name=pipelineName,
+                    policy_description="Custom policy",
+                    policy_id=f"ASTRID_{id_num + 1}",
+                    active=True
+                )
+                pipeline.save()
 
-        service.kibana_dashboard = ""
+        yaml_file, nodes, edges = generate_visjs_graph(yaml_file)
+        service.service_file_b64 = str(base64.b64encode(
+            pickle.dumps(yaml_file)), "utf-8")
+        service.graph_b64 = str(base64.b64encode(
+            pickle.dumps({'nodes': nodes, 'edges': edges})), "utf-8")    
+        service.save()
+        
+        if pipeline:
+            pipeline.service_file_b64 = str(base64.b64encode(
+                pickle.dumps(yaml_file)), "utf-8")
+            pipeline.save()
+
+        return redirect(reverse('dashboard:service', kwargs={'service_id': service_id}))
+
+    graph = pickle.loads(base64.b64decode(service.graph_b64))
+    nodes = graph['nodes']
+    edges = graph['edges']
+
+    # print(nodes)
+    # print(edges)
+
+    agents = AgentTemplate.objects.all()
+    algorithms = AlgorithmTemplate.objects.all()
+
+    enabled_algorithms = Algorithm.objects.all().filter(service=service,active=True).values_list('algorithm_id', flat=True)
+
+    context = {'nodes': nodes, 'edges': edges,
+               'service': service,
+               'agents': agents, 'algorithms': algorithms,
+               'enabled_algorithms': enabled_algorithms}
+
+    return render(request, 'dashboard/editor.html', context)
+
+    
+@login_required
+def service(request, service_id):
+    service = Service.objects.get(id=service_id, owner_id=request.user.id)
+
+    if request.method == 'POST':
+        SecurityPolicy.objects.all().filter(service=service,active=True).update(active=False)
+        yaml_b64 = service.service_file_b64
+        yaml_file = pickle.loads(base64.b64decode(yaml_b64))
+        yaml_file, nodes, edges = generate_visjs_graph(yaml_file)
+        service.service_file_b64 = str(base64.b64encode(
+            pickle.dumps(yaml_file)), "utf-8")
+        service.graph_b64 = str(base64.b64encode(
+            pickle.dumps({'nodes': nodes, 'edges': edges})), "utf-8")    
         service.save()
 
-    nodes, edges, all_edges = generate_visjs_graph(service.service_file.read())
+        enabled = False
+        for k,v in request.POST.items():
+            if re.match(r'ASTRID_\d+$',k):
+                print("create/update policy from template")
+                enabled = True
+                try:
+                    p = SecurityPolicy.objects.get(service=service,policy_id=v)
+                    p.active = True
+                    p.save()
+                except:
+                    policy = SecurityPolicyTemplate.objects.get(policy_id=v)
+                    p = SecurityPolicy(
+                        policy_sla = policy.policy_sla,
+                        policy_name = policy.policy_name,
+                        policy_description = policy.policy_description,
+                        policy_id = policy.policy_id,
+                        service = service,
+                        active = True
+                    )
+                    p.save()
+        for k,v in request.POST.items():
+            if re.match(r'ASTRID_\d+\.CONFIG$',k) and enabled:
+                if v:
+                    print("update configuration")
+                    policy_id = k.split('.')[0]
+                    p = SecurityPolicy.objects.get(service=service,policy_id=policy_id)
+                    p.configuration = v.lstrip(" \t\n")
+                    p.save()
+        for k,v in request.POST.items():
+            if re.match(r'ASTRID_\d+\.CODE$',k) and enabled:
+                if v:
+                    print("update code")
+                    policy_id = k.split('.')[0]
+                    p = SecurityPolicy.objects.get(service=service,policy_id=policy_id)
+                    p.code = v.lstrip(" \t\n")
+                    p.save()
+                    print("exec code")
+                    OUTPUT = ""
+                    yaml_b64 = service.service_file_b64
+                    yaml_file = pickle.loads(base64.b64decode(yaml_b64))
+                    exec(v)
+                    print(yaml_file)
 
-    for connection in allowed_connections:
-        try:
-            edges.append({"from": connection.split('-to-')[0],
-                          "to": connection.split('-to-')[1], "arrows": "to",
-                          "id": connection, "color": {"color": "red"}})
-        except Exception as ex:
-            print(ex)
+                    yaml_file, nodes, edges = generate_visjs_graph(yaml_file)
+                    service.service_file_b64 = str(base64.b64encode(
+                        pickle.dumps(yaml_file)), "utf-8")
+                    service.graph_b64 = str(base64.b64encode(
+                        pickle.dumps({'nodes': nodes, 'edges': edges})), "utf-8")    
 
-    # print(edges)
-    basic_policies = SecurityPolicy.objects.all().filter(policy_sla='B')
-    pro_policies = SecurityPolicy.objects.all().filter(policy_sla='P')
-    unlimited_policies = SecurityPolicy.objects.all().filter(policy_sla='U')
+                    service.save()
+                else:
+                    print("update graph")
+                    policy_id = k.split('.')[0]
+                    p = SecurityPolicy.objects.get(service=service,policy_id=policy_id)
+                    yaml_b64 = service.service_file_b64
+                    yaml_file = pickle.loads(base64.b64decode(yaml_b64))
+                    yaml_file, nodes, edges = generate_visjs_graph(yaml_file)
+                    service.service_file_b64 = str(base64.b64encode(
+                        pickle.dumps(yaml_file)), "utf-8")
+                    service.graph_b64 = str(base64.b64encode(
+                        pickle.dumps({'nodes': nodes, 'edges': edges})), "utf-8")    
 
-    service_policies = service.policies.all().values_list('policy_id', flat=True)
+                    service.save()
+
+    graph = pickle.loads(base64.b64decode(service.graph_b64))
+    nodes = graph['nodes']
+    edges = graph['edges']
+
+    basic_policies = SecurityPolicyTemplate.objects.all().filter(policy_sla='B')
+    pro_policies = SecurityPolicyTemplate.objects.all().filter(policy_sla='P')
+    unlimited_policies = SecurityPolicyTemplate.objects.all().filter(policy_sla='U')
+    custom_policies = SecurityPolicyTemplate.objects.all().filter(policy_sla='C')
+    custom_service_policies = SecurityPolicy.objects.all().filter(service=service,policy_sla='C')
+    cp = [p for p in custom_service_policies if not p.policy_name in custom_policies.values_list('policy_name', flat=True)]
+    custom_policies = list(custom_policies) + list(cp)
+    #custom_policies = (custom_policies | custom_service_policies).distinct()
+    service_policies = SecurityPolicy.objects.all().filter(service=service)
     
-    service_configurations = {}
-    for policy_id in service_policies:
-        policy = SecurityPolicy.objects.get(policy_id=policy_id)
-        obj, created = Configuration.objects.get_or_create(service=service, policy=policy)
-        service_configurations[policy_id] = obj.config.lstrip(" \t\n")
+    enabled_policies = SecurityPolicy.objects.all().filter(service=service,active=True).values_list('policy_id', flat=True)
+    
 
-    context = {'nodes': nodes, 'edges': edges, 'all_edges': all_edges,
+    #service_policies = service.policies.filter(active=True).values_list('policy_id', flat=True)
+    
+    # service_configurations = {}
+    # for policy_id in service_policies:
+    #     policy = SecurityPolicy.objects.get(policy_id=policy_id)
+    #     service_configurations[policy_id] = policy.configuration
+
+    context = {'nodes': nodes, 'edges': edges,
                'service': service, 'basic_policies': basic_policies,
                'pro_policies': pro_policies,
                'unlimited_policies': unlimited_policies,
+               'custom_policies': custom_policies,
                'service_policies': service_policies,
-               'allowed_connections': allowed_connections,
-               'service_configurations': service_configurations}
+               'enabled_policies': enabled_policies}
 
     return render(request, 'dashboard/service.html', context)
 
@@ -159,6 +511,19 @@ def services(request):
         service_name = request.POST['service-name']
         service = Service(owner=request.user, service_name=service_name,
                           service_file=request.FILES['service-file'])
+        service.save()
+
+        yaml_file = bios.read(service.service_file.path, file_type='yaml')
+
+        yaml_file, nodes, edges = generate_visjs_graph(yaml_file)
+
+        service.service_file_b64 = str(base64.b64encode(
+            pickle.dumps(yaml_file)), "utf-8")
+        service.service_file_orig_b64 = str(base64.b64encode(
+            pickle.dumps(yaml_file)), "utf-8")
+        service.graph_b64 = str(base64.b64encode(
+            pickle.dumps({'nodes': nodes, 'edges': edges})), "utf-8")    
+
         service.save()
 
     return render(request, 'dashboard/services.html',

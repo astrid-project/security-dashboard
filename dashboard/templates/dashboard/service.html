@@ -18,59 +18,50 @@
   <div class="col ml-5 mt-5 mb-5">
     <form action="{% url 'dashboard:service' service.id %}" method="post">
       {% csrf_token %}
-      <!-- {% if all_edges %}
-      <h6 class="row btn text-muted" type="button" data-toggle="collapse" data-target="#connections"><i
-          class="fas fa-angle-down"></i> Allow connections
-      </h6>
-      <div id="connections" class="collapse">
-        {% for edge in all_edges %}
-        <div class="custom-control custom-switch">
-          {% if edge.id in allowed_connections %}
-          <input type="checkbox" class="custom-control-input" id="{{ edge.id | slugify }}"
-            value="{{ edge.id | slugify }}" name="{{ edge.id | slugify }}"
-            onclick="toggleEdge('{{ edge.id }}', '{{ edge.from }}', '{{ edge.to }}');" checked>
-          {% else %}
-          <input type="checkbox" class="custom-control-input" id="{{ edge.id | slugify }}"
-            value="{{ edge.id | slugify }}" name="{{ edge.id | slugify }}"
-            onclick="toggleEdge('{{ edge.id }}', '{{ edge.from }}', '{{ edge.to }}');">
-          {% endif %}
-          <label class="custom-control-label" for="{{ edge.id | slugify }}">{{ edge.from }} to {{ edge.to }}</label>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %} -->
       <p></p>
       {% if basic_policies %}
       <h6 class="row btn text-muted" type="button" data-toggle="collapse" data-target="#basic"><i
-          class="fas fa-angle-down"></i> Basic policies</h6>
+          class="fas fa-angle-down"></i> Basic services/pipelines</h6>
       <div id="basic" class="collapse show">
         {% for policy in basic_policies %}
         <div class="custom-control custom-switch">
-          {% if policy.policy_id in service_policies %}
+          {% if policy.policy_id in enabled_policies %}
           <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}"
             name="{{ policy.policy_id }}" checked>
           {% else %}
           <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}"
             name="{{ policy.policy_id }}">
           {% endif %}
-          <label class="custom-control-label" for="{{ policy.policy_id }}" data-toggle="tooltip" data-placement="top" title="{{ policy.policy_description }}">{{ policy.policy_name }}</label>
+          <label class="custom-control-label" for="{{ policy.policy_id }}" data-toggle="tooltip" data-placement="top"
+            title="{{ policy.policy_description }}">{{ policy.policy_name }}</label>
         </div>
         <div>
-          <button type="button" class="btn btn-link" data-toggle="modal" data-target="#{{ policy.policy_id }}Modal">configure ...</button>
-          <div class="modal fade" id="{{ policy.policy_id }}Modal" tabindex="-1" role="dialog" aria-labelledby="{{ policy.policy_id }}ModalLabel" aria-hidden="true">
+          <i class="fa fa-cogs" aria-hidden="true"></i>
+          <button style="margin-left: -10px;" type="button" class="btn btn-link" data-toggle="modal"
+            data-target="#{{ policy.policy_id }}Modal">configure ...</button>
+          <i class="fa fa-code" aria-hidden="true"></i>
+          <button style="margin-left: -10px;" type="button" class="btn btn-link" data-toggle="modal"
+            data-target="#{{ policy.policy_id }}Modal">code ...</button>            
+          <i class="fa fa-edit" aria-hidden="true"></i><a href="{% url 'dashboard:editor' service.id %}"
+            style="margin-left: -10px;" class="btn btn-link" role="button">edit ...</a>
+          <div class="modal fade" id="{{ policy.policy_id }}Modal" tabindex="-1" role="dialog"
+            aria-labelledby="{{ policy.policy_id }}ModalLabel" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h5 class="modal-title" id="{{ policy.policy_id }}ModalLabel">{{ policy.policy_name }} configuration</h5>
+                  <h5 class="modal-title" id="{{ policy.policy_id }}ModalLabel">{{ policy.policy_name }} configuration
+                  </h5>
                   <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                   </button>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                      <label for="{{ policy.policy_id }}.CONFIG">Configuration</label>
-                      <textarea class="form-control" id="{{ policy.policy_id }}.CONFIG" name="{{ policy.policy_id }}.CONFIG" rows="10">{% for key, value in service_configurations.items %}{% ifequal policy.policy_id key %}{{ value }}{% endifequal %}{% endfor %}</textarea>
-                    </div>
+                  <div class="form-group">
+                    <label for="{{ policy.policy_id }}.CONFIG">Configuration</label>
+                    <textarea class="form-control" id="{{ policy.policy_id }}.CONFIG"
+                      name="{{ policy.policy_id }}.CONFIG"
+                      rows="10"></textarea>
+                  </div>
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Save</button>
@@ -84,22 +75,24 @@
       {% endif %}
       <p></p>
       <h6 class="row btn text-muted" type="button" data-toggle="collapse" data-target="#pro"><i
-          class="fas fa-angle-down"></i> Pro policies - get the
+          class="fas fa-angle-down"></i> Pro services/pipelines - get the
         Pro-SLA
-        <i class="fas fa-tag"></i></h6>
+        <i class="fas fa-tag"></i>
+      </h6>
       {% if pro_policies %}
       <div id="pro" class="collapse show">
         {% for policy in pro_policies %}
         <div class="custom-control custom-switch">
           <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" disabled>
-          <label class="custom-control-label" for="{{ policy.policy_id }}" data-toggle="tooltip" data-placement="top" title="{{ policy.policy_description }}">{{ policy.policy_name }}</label>
+          <label class="custom-control-label" for="{{ policy.policy_id }}" data-toggle="tooltip" data-placement="top"
+            title="{{ policy.policy_description }}">{{ policy.policy_name }}</label>
         </div>
         {% endfor %}
       </div>
       {% endif %}
       <p></p>
       <h6 class="row btn text-muted" type="button" data-toggle="collapse" data-target="#unlimited"><i
-          class="fas fa-angle-down"></i> Unlimited policies -
+          class="fas fa-angle-down"></i> Unlimited services/pipelines -
         get
         the Unlimited-SLA <i class="fas fa-tag"></i></h6>
       {% if unlimited_policies %}
@@ -107,35 +100,138 @@
         {% for policy in unlimited_policies %}
         <div class="custom-control custom-switch">
           <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" disabled>
-          <label class="custom-control-label" for="{{ policy.policy_id }}" data-toggle="tooltip" data-placement="top" title="{{ policy.policy_description }}">{{ policy.policy_name }}</label>
+          <label class="custom-control-label" for="{{ policy.policy_id }}" data-toggle="tooltip" data-placement="top"
+            title="{{ policy.policy_description }}">{{ policy.policy_name }}</label>
         </div>
         {% endfor %}
       </div>
       {% endif %}
-      <div class="mt-3">
-        <button type="submit" class="btn btn-success">Apply policies</button>
+      <p></p>
+      <h6 class="row btn text-muted" type="button" data-toggle="collapse" data-target="#custom"><i
+          class="fas fa-angle-down"></i> Custom services/pipelines</h6>
+      {% if custom_policies %}
+      <div id="custom" class="collapse show">
+        {% for policy in custom_policies %}
+        <div class="custom-control custom-switch">
+        {% if policy.policy_id in enabled_policies %}
+        <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}"
+          name="{{ policy.policy_id }}" checked>
+        {% else %}
+        <input type="checkbox" class="custom-control-input" id="{{ policy.policy_id }}" value="{{ policy.policy_id }}"
+        name="{{ policy.policy_id }}">
+        {% endif %}
+        <label class="custom-control-label" for="{{ policy.policy_id }}" data-toggle="tooltip" data-placement="top"
+          title="{{ policy.policy_description }}">{{ policy.policy_name }}</label>
+        </div>
+        <div>
+          <i class="fa fa-cogs" aria-hidden="true"></i>
+          <button style="margin-left: -10px;" type="button" class="btn btn-link" data-toggle="modal"
+            data-target="#{{ policy.policy_id }}ConfigModal">configure ...</button>
+          <i class="fa fa-code" aria-hidden="true"></i>
+          <button style="margin-left: -10px;" type="button" class="btn btn-link" data-toggle="modal"
+            data-target="#{{ policy.policy_id }}CodeModal">code ...</button>
+          <i class="fa fa-edit" aria-hidden="true"></i><a href="{% url 'dashboard:editor' service.id %}"
+            style="margin-left: -10px;" class="btn btn-link" role="button">edit ...</a>
+          <div class="modal fade" id="{{ policy.policy_id }}CodeModal" tabindex="-1" role="dialog"
+            aria-labelledby="{{ policy.policy_id }}CodeModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="{{ policy.policy_id }}CodeModalLabel">{{ policy.policy_name }} code
+                  </h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <label for="{{ policy.policy_id }}.CODE">Code</label>
+                    <textarea class="form-control" id="{{ policy.policy_id }}.CODE"
+                      name="{{ policy.policy_id }}.CODE"
+                      rows="10">{% for service_policy in service_policies %}{% if service_policy.policy_id == policy.policy_id %}{{ service_policy.code }}{% else %}{{ policy.code}}{% endif %}{% endfor %}</textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal fade" id="{{ policy.policy_id }}ConfigModal" tabindex="-1" role="dialog"
+            aria-labelledby="{{ policy.policy_id }}ConfigModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="{{ policy.policy_id }}ConfigModalLabel">{{ policy.policy_name }} configuration
+                  </h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <label for="{{ policy.policy_id }}.CONFIG">Configuration</label>
+                    <textarea class="form-control" id="{{ policy.policy_id }}.CONFIG"
+                      name="{{ policy.policy_id }}.CONFIG"
+                      rows="10">{% for service_policy in service_policies %}{% if service_policy.policy_id == policy.policy_id %}{{ service_policy.configuration }}{% else %}{{ policy.configuration}}{% endif %}{% endfor %}</textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
       </div>
-    </form>
+      {% endif %}
+  <div class="mt-3">
+    <button type="submit" class="btn btn-success">Apply security services</button>
+    <a href="{% url 'dashboard:editor' service.id %}" class="btn btn-warning" role="button">Add security services</a>
   </div>
+  </form>
+</div>
 </div>
 <div class="row mb-5">
   <div class="col-4">
     <form action="{% url 'dashboard:deploy' service.id %}" method="post">
       {% csrf_token %}
-      <label for="orchestratorSelect">Choose service orchestrator</label>
+      <label for="orchestratorSelect">Choose orchestrator</label>
       <select class="form-control mb-2" id="orchestratorSelect" name="orchestratorSelect">
         <option value="kubernetes">Kubernetes</option>
         <option value="maestro">Maestro</option>
       </select>
       <input type="hidden" name="next" value="{{ request.path }}">
-      <button type="button submit" class="btn btn-danger">Deploy service</button>
+      <button type="button submit" class="btn btn-danger">Deploy graph</button>
     </form>
+  </div>
+</div>
+<div class="modal fade" id="nodeModal" tabindex="-1" role="dialog" aria-labelledby="nodeModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="nodeModalLabel">resource</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Namespace: {{ service.service_name }}</p>
+        <p id="nodeLabels"></p>
+        <p id="kubernetesData"></p>
+        <p id="nodeStatus"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
 {% block customjs %}
 <script type="text/javascript">
-  var nodes, edges, network;
+  var nodes, edges, network, namespace;
 
   function toJSON(obj) {
     return JSON.stringify(obj, null, 4);
@@ -212,7 +308,7 @@
       k8_sts: {
         shape: 'image',
         image: "{% static 'dashboard/img/sts-256.png' %}",
-      },      
+      },
       k8_pod: {
         shape: 'image',
         image: "{% static 'dashboard/img/pod-256.png' %}",
@@ -243,6 +339,51 @@
   var container = document.getElementById('mynetwork');
   // create a network
   var network = new vis.Network(container, data, options);
+  network.on('click', function (properties) {
+    var ids = properties.nodes;
+    var clickedNodes = nodes.get(ids);
+    //alert('clicked nodes:', clickedNodes);
+    console.log('clicked nodes:', clickedNodes);
+    $("#nodeModalLabel").text(clickedNodes[0]["label"]);
+    var label = clickedNodes[0]["label"];
+    // var labels_enc = encodeURIComponent(labels);
+    // $("#nodeLabels").text(JSON.stringify(labels));
+    // var namespace = "{{ service.service_name }}";
+    // var url_mask = "url 'dashboard:k8resource' service.service_name labels".replace(/labels/, labels_enc.toString());
+    $.ajax({
+      url: "{% url 'dashboard:k8resource' %}",
+      data: { namespace: "{{ service.service_name }}", label: label }
+    }).then(function (data) {
+      console.log(data);
+      var obj = JSON.parse(data);
+      document.getElementById("kubernetesData").innerHTML =
+        "Host IP: " + obj.host_ip + "<br>" +
+        "Pod IP: " + obj.pod_ip + "<br>" +
+        "Phase: " + obj.phase + "<br>" +
+        "Start time: " + obj.start_time + "<br>";
+      for (var i = 0; i < obj.containers.length; i++) {
+        document.getElementById("kubernetesData").innerHTML +=
+          "Container: " + obj.containers[i].name + "<br>" +
+          "Ready: " + obj.containers[i].ready + "<br>"
+      }
+      // for (var i = 0; i < obj.length; i++) {
+      //   var div = document.createElement("div");
+      //   div.innerHTML = 'Host IP: ' + obj[i].firstName + ' ' + data[i].lastName;
+      //   mainContainer.appendChild(div);
+      // }
+
+      // $('#nodeStatus').text(JSON.stringify(data));
+    });
+    $("#nodeModal").modal();
+    // $('#my_modal').on('show.bs.modal', function(e) {
+
+    //   //get data-id attribute of the clicked element
+    //   var nodeId = nodes.get(ids);
+
+    //   //populate the textbox
+    //   $(e.currentTarget).find('input[name="nodeId"]').val(nodeId);
+    //   });
+  });
 
   $(function () {
     $('[data-toggle="tooltip"]').tooltip()

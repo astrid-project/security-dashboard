@@ -4,7 +4,8 @@ metadata:
   name: rest-admin
 rules:
 - apiGroups: ["", "extensions", "apps"]
-  resources: ["pods", "deployments", "services", "namespaces"]
+  resources:
+    - "*" #["pods", "deployments", "services", "namespaces"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -21,35 +22,144 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: astrid
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: astrid
+  name: event-exporter
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: event-exporter
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    namespace: astrid
+    name: event-exporter
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: event-exporter-cfg
+  namespace: astrid
+data:
+  config.yaml: |
+    logLevel: error
+    logFormat: json
+    route:
+      routes:
+        - match:
+            - receiver: "dump"
+    receivers:
+      - name: "dump"
+        file:
+          path: "/dev/stdout"
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: event-exporter
+#   namespace: astrid
+# spec:
+#   replicas: 1
+#   template:
+#     metadata:
+#       labels:
+#         app: event-exporter
+#         version: v1
+#     spec:
+#       serviceAccountName: event-exporter
+#       containers:
+#         - name: event-exporter
+#           image: opsgenie/kubernetes-event-exporter:0.9
+#           imagePullPolicy: IfNotPresent
+#           args:
+#             - -conf=/data/config.yaml
+#           volumeMounts:
+#             - mountPath: /data
+#               name: cfg
+#       volumes:
+#         - name: cfg
+#           configMap:
+#             name: event-exporter-cfg
+#   selector:
+#     matchLabels:
+#       app: event-exporter
+#       version: v1
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dashboard-data
+  labels:
+    type: local
+spec:
+  storageClassName: local-storage
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/dashboard"
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
     name: dashboard-data
+    namespace: astrid
     labels:
         app: dashboard
 spec:
+    storageClassName: local-storage
     accessModes:
-      - ReadWriteMany
+      - ReadWriteOnce
     resources:
         requests:
-            storage: 1Gi
+            storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-data
+  labels:
+    type: local
+spec:
+  storageClassName: local-storage
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/postgres"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
     name: postgres-data
+    namespace: astrid
     labels:
         app: db
 spec:
+    storageClassName: local-storage
     accessModes:
       - ReadWriteOnce
     resources:
         requests:
-            storage: 100Mi
+            storage: 20Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
     name: db
+    namespace: astrid
     labels:
         app: db
 spec:
@@ -64,6 +174,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: db
+    namespace: astrid
     labels:
         app: db
 spec:
@@ -99,6 +210,7 @@ apiVersion: v1
 kind: Service
 metadata:
     name: redis
+    namespace: astrid
     labels:
         app: redis
 spec:
@@ -113,6 +225,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: redis
+    namespace: astrid
     labels:
         app: redis
 spec:
@@ -135,6 +248,7 @@ apiVersion: v1
 kind: Service
 metadata:
     name: dashboard
+    namespace: astrid
     labels:
         app: dashboard
 spec:
@@ -151,6 +265,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: celery
+    namespace: astrid
     labels:
         app: celery
 spec:
@@ -165,7 +280,8 @@ spec:
         spec:
             containers:
             - name: celery
-              image: security-dashboard:latest
+              image: bertl4398/dashboard:latest
+              #image: dashboard
               args:
                 - celery
                 - -A
@@ -173,12 +289,11 @@ spec:
                 - worker
                 - -l
                 - DEBUG
-              volumeMounts:
-                - name: dashboard-data
-                  mountPath: /tmp
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
+              #imagePullPolicy: Never
             - name: celery-beat
-              image: security-dashboard:latest
+              image:  bertl4398/dashboard:latest
+              #image: dashboard
               args:
                 - celery
                 - -A
@@ -186,19 +301,14 @@ spec:
                 - beat
                 - -l
                 - DEBUG
-              volumeMounts:
-                - name: dashboard-data
-                  mountPath: /tmp
-              imagePullPolicy: IfNotPresent
-            volumes:
-              - name: dashboard-data
-                persistentVolumeClaim:
-                    claimName: dashboard-data     
+              imagePullPolicy: Always
+              #imagePullPolicy: Never
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: dashboard
+    namespace: astrid
     labels:
         app: dashboard
 spec:
@@ -213,15 +323,17 @@ spec:
         spec:
             containers:
               - name: dashboard
-                image: security-dashboard:latest
+                image: bertl4398/dashboard:latest
+                #image: dashboard
                 command: ["/bin/sh", "-c"]
-                args: ["python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+                args: ["python manage.py makemigrations dashboard && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
                 ports:
                   - containerPort: 8000
                 volumeMounts:
                   - name: dashboard-data
                     mountPath: /tmp
-                imagePullPolicy: IfNotPresent
+                imagePullPolicy: Always
+                #imagePullPolicy: Never
             volumes:
               - name: dashboard-data
                 persistentVolumeClaim:

@@ -83,3 +83,8 @@ It is recommended to run the Django application with a WSGI HTTP server behind a
 For more information on deployment please refer to:
 
 https://docs.djangoproject.com/en/3.0/howto/deployment/
+
+### Running on Kubernetes
+To deploy and run the dashboard in Kubernetes you can use the `dashboard.yaml` all-in-one deployment file.
+
+https://github.com/astrid-project/security-dashboard/blob/master/cut.mp4
