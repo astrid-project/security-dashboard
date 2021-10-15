@@ -131,6 +131,9 @@ def kubernetes_apply(yaml_b64, namespace="default", sc={}):
     for yaml in yaml_file:
         if yaml["kind"] == "Deployment":
             if "annotations" in yaml["metadata"]:
+                exec_env = '-'.join(str(uuid.uuid4()).split('-')[:2] +
+                                    [yaml["metadata"]["name"]])
+                exec_env = 'sc-ebpf-' + exec_env                    
                 for k,v in yaml["metadata"]["annotations"].items():
                     if k in agent_list:
                         port = ""
@@ -146,7 +149,7 @@ def kubernetes_apply(yaml_b64, namespace="default", sc={}):
                                            "name": name,
                                            "ip": None,
                                            "port": port,
-                                           "exec_env_id": "sc-ebpf-156873495 upf-8",
+                                           "exec_env_id": exec_env,
                                            "arguments": [],
                                            "deployment": yaml["metadata"]["name"]
                                           })
@@ -181,8 +184,9 @@ def kubernetes_apply(yaml_b64, namespace="default", sc={}):
                     msg = json.dumps(sc)
                     print(msg)
                     try:
-                        r = requests.post(security_controller_url,data=msg)
+                        r = requests.post(security_controller_url,json=sc)
                         print(r)
+                        print(r.json())
                     except:
                         pass
                     security_controller_notified = True

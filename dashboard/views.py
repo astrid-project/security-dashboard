@@ -289,7 +289,14 @@ def editor(request, service_id):
                                     image=at.image
                                 )
                                 a.save()
-                                container = {'image': a.image, 'name': a.name} #, 'args': ['sleep', '1000']}
+                                container = {'image': a.image, 'name': a.name,
+                                             'volumeMounts': [
+                                                 {"name": "packetbeat",
+                                                  "mountPath": "/etc/packetbeat/packetbeat.yml",
+                                                  "subPath": "packetbeat.yml"
+                                                 }
+                                             ]
+                                            } #, 'args': ['sleep', '1000']}
                                 y["spec"]["template"]["spec"]["containers"].append(container)
                                 y['metadata']['annotations'][a.name] = str(a.uuid)
         else:
