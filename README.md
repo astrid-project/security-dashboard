@@ -87,4 +87,5 @@ https://docs.djangoproject.com/en/3.0/howto/deployment/
 ### Running on Kubernetes
 To deploy and run the dashboard in Kubernetes you can use the `dashboard.yaml` all-in-one deployment file.
 
-https://github.com/astrid-project/security-dashboard/blob/master/cut.mp4
+https://user-images.githubusercontent.com/1226441/137513964-f98322df-eae3-4067-b7b3-30bb98b0d8de.mp4
+
